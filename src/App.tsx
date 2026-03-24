@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
-interface Midia { tipo: 'foto' | 'video'; url: string; }
+interface Midia { tipo: string; url: string; }
 interface Veiculo { 
   id?: number; marca: string; modelo: string; fabricacao: string; km: string; preco: string; 
-  status: 'Disponível' | 'Vendido' | 'Oculto'; galeria: Midia[]; unico_dono: boolean;
+  status: string; galeria: Midia[]; unico_dono: boolean;
   cliente_nome?: string; depoimento_venda?: string;
   blindado?: boolean; laudo_cautelar?: boolean; ipva_pago?: boolean; revisoes_concessionaria?: boolean;
   preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
@@ -26,7 +26,6 @@ const FRASES_MOTIVACIONAIS = [
   "Mais que um veículo, entregamos segurança e confiança para o seu caminho."
 ];
 
-// Funções blindadas contra dados corrompidos
 const formatCurrencyBR = (value: any) => {
   let v = String(value || '').replace(/\D/g, ''); 
   if (!v) return '';
@@ -39,7 +38,7 @@ const sanitizeNumber = (str: any) => Number(String(str || '').replace(/\D/g, '')
 
 export default function App() {
   const [view, setView] = useState<'public' | 'admin'>('public');
-  const [adminTab, setAdminTab] = useState<'inicio' | 'novo_veiculo' | 'meu_estoque' | 'videos' | 'avaliacoes' | 'institucional'>('inicio');
+  const [adminTab, setAdminTab] = useState('inicio');
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); 
   
@@ -72,53 +71,48 @@ export default function App() {
   const [fraseAtiva, setFraseAtiva] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // 'any' protege contra falhas de compilação do Vercel caso as refs não montem
-  const carouselRef = useRef<any>(null);
-  const videosRef = useRef<any>(null);
-  const bannersRef = useRef<any>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const bannersRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { 
     fetchConfig(); fetchVeiculos(); fetchAvaliacoes(); fetchVideos(); fetchBanners(); 
   }, []);
 
   useEffect(() => {
-    const scrollCarousel = (ref: any, step: number) => {
-      if (ref.current && view === 'public') {
-        const { scrollLeft, scrollWidth, clientWidth } = ref.current;
-        if (scrollLeft + clientWidth >= scrollWidth - 10) ref.current.scrollTo({ left: 0, behavior: 'smooth' });
-        else ref.current.scrollBy({ left: step, behavior: 'smooth' });
+    const scrollCarousel = (element: HTMLDivElement | null, step: number) => {
+      if (element && view === 'public') {
+        const { scrollLeft, scrollWidth, clientWidth } = element;
+        if (scrollLeft + clientWidth >= scrollWidth - 10) element.scrollTo({ left: 0, behavior: 'smooth' });
+        else element.scrollBy({ left: step, behavior: 'smooth' });
       }
     };
 
     const intervalCarousels = setInterval(() => {
-      scrollCarousel(carouselRef, carouselRef.current?.clientWidth ? carouselRef.current.clientWidth / 2 : 300);
-      scrollCarousel(videosRef, videosRef.current?.clientWidth ? videosRef.current.clientWidth / 1.5 : 300);
-      scrollCarousel(bannersRef, bannersRef.current?.clientWidth || 300);
+      if (carouselRef.current) scrollCarousel(carouselRef.current, carouselRef.current.clientWidth / 2);
+      if (bannersRef.current) scrollCarousel(bannersRef.current, bannersRef.current.clientWidth);
     }, 4000);
 
     const intervalFrases = setInterval(() => setFraseAtiva((prev) => (prev + 1) % FRASES_MOTIVACIONAIS.length), 5000);
 
     return () => { clearInterval(intervalCarousels); clearInterval(intervalFrases); }
-  }, [view, avaliacoes, videosGaleria, banners]);
+  }, [view]);
 
-  // Try-catch nas requisições para evitar telas pretas por falha de banco
   async function fetchConfig() { try { const { data } = await supabase.from('site_config').select('*').eq('id', 1).maybeSingle(); if (data) setConfig(data); } catch (e) {} }
   async function fetchVeiculos() { try { const { data } = await supabase.from('veiculos').select('*').order('id', { ascending: false }); if (data) setVeiculos(data); } catch (e) {} }
   async function fetchAvaliacoes() { try { const { data } = await supabase.from('avaliacoes').select('*').order('id', { ascending: false }); if (data) setAvaliacoes(data); } catch (e) {} }
   async function fetchVideos() { try { const { data } = await supabase.from('galeria_videos').select('*').order('id', { ascending: false }); if (data) setVideosGaleria(data); } catch (e) {} }
   async function fetchBanners() { try { const { data } = await supabase.from('banners').select('*').order('id', { ascending: true }); if (data) setBanners(data); } catch (e) {} }
 
-  // Array.isArray garante que o .filter só rode se 'veiculos' for realmente uma lista
   const listaVeiculos = Array.isArray(veiculos) ? veiculos : [];
   
   const veiculosFiltrados = listaVeiculos.filter(v => {
     if (v.status !== 'Disponível') return false;
     
-    const matchMarca = filtroMarca === '' || v.marca === filtroMarca;
-    const matchAno = filtroAno === '' || v.fabricacao === filtroAno;
-    const matchCombustivel = filtroCombustivel === '' || v.combustivel === filtroCombustivel;
-    const matchCambio = filtroCambio === '' || v.cambio === filtroCambio;
-    const matchTipo = filtroTipo === '' || v.tipo_carro === filtroTipo;
+    const matchMarca = !filtroMarca || v.marca === filtroMarca;
+    const matchAno = !filtroAno || v.fabricacao === filtroAno;
+    const matchCombustivel = !filtroCombustivel || v.combustivel === filtroCombustivel;
+    const matchCambio = !filtroCambio || v.cambio === filtroCambio;
+    const matchTipo = !filtroTipo || v.tipo_carro === filtroTipo;
     
     const kmNum = sanitizeNumber(v.km);
     let matchKm = true;
@@ -198,12 +192,20 @@ export default function App() {
       }
     }
     
-    const payload = { ...form, galeria: novaGaleria }; delete payload.id; 
+    const payload = { ...form, galeria: novaGaleria }; 
+    delete payload.id; 
     
-    if (editingId) { await supabase.from('veiculos').update(payload).eq('id', editingId); alert("✅ Veículo atualizado!"); } 
-    else { await supabase.from('veiculos').insert([payload]); alert("✅ Veículo publicado!"); }
+    if (editingId) { 
+      const { error } = await supabase.from('veiculos').update(payload).eq('id', editingId); 
+      if (error) alert("Erro ao atualizar o banco de dados. Motivo: " + error.message);
+      else { alert("Veículo atualizado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+    } else { 
+      const { error } = await supabase.from('veiculos').insert([payload]); 
+      if (error) alert("Erro ao publicar! O banco recusou. Motivo: " + error.message);
+      else { alert("Veículo publicado com sucesso!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+    }
     
-    cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); setLoading(false); setUploadProgress(0);
+    setLoading(false); setUploadProgress(0);
   };
 
   const atualizarStatusVeiculo = async (id: number, novoStatus: string) => { await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id); fetchVeiculos(); };
@@ -229,10 +231,15 @@ export default function App() {
     }
     
     const payload = { url, titulo: vidForm.titulo, descricao: vidForm.descricao };
-    if (editingVideoId) { await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); alert("✅ Atualizado!"); } 
-    else { await supabase.from('galeria_videos').insert([payload]); alert("✅ Adicionado!"); }
+    if (editingVideoId) { 
+      const {error} = await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); 
+      if(error) alert(error.message); else { alert("Atualizado!"); cancelarEdicaoVideo(); fetchVideos(); }
+    } else { 
+      const {error} = await supabase.from('galeria_videos').insert([payload]); 
+      if(error) alert(error.message); else { alert("Adicionado!"); cancelarEdicaoVideo(); fetchVideos(); }
+    }
     
-    cancelarEdicaoVideo(); fetchVideos(); setLoading(false); setUploadProgress(0);
+    setLoading(false); setUploadProgress(0);
   };
   
   const deletarVideo = async (id: number) => { if(window.confirm("Apagar vídeo?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
@@ -242,7 +249,10 @@ export default function App() {
     if(!file) return;
     setLoading(true);
     const url = await uploadMidiaSingle(file);
-    if(url) { await supabase.from('banners').insert([{ url }]); fetchBanners(); alert("Banner adicionado!"); }
+    if(url) { 
+      const {error} = await supabase.from('banners').insert([{ url }]); 
+      if(error) alert(error.message); else { fetchBanners(); alert("Banner adicionado!"); } 
+    }
     setLoading(false);
   }
   const deletarBanner = async (id: number) => { if(window.confirm("Apagar Banner?")) { await supabase.from('banners').delete().eq('id', id); fetchBanners(); } }
@@ -251,8 +261,8 @@ export default function App() {
     e.preventDefault(); setLoading(true); setUploadProgress(50);
     let foto_url = '';
     if (pubReviewFile) { const url = await uploadMidiaSingle(pubReviewFile); if (url) foto_url = url; }
-    await supabase.from('avaliacoes').insert([{ nome: pubReview.nome, texto: pubReview.texto, foto_url, aprovado: isAdmin }]);
-    alert(isAdmin ? "Publicada!" : "Enviada! Aguarde aprovação.");
+    const {error} = await supabase.from('avaliacoes').insert([{ nome: pubReview.nome, texto: pubReview.texto, foto_url, aprovado: isAdmin }]);
+    if (error) alert(error.message); else alert(isAdmin ? "Publicada!" : "Enviada! Aguarde aprovação.");
     setPubReview({ nome: '', texto: '' }); setPubReviewFile(null); setShowReviewForm(false); fetchAvaliacoes();
     setLoading(false); setUploadProgress(0);
   };
@@ -265,8 +275,8 @@ export default function App() {
   const salvarConfig = async () => { 
     setLoading(true); 
     const { id, updated_at, brand_name, brand_sub, endereco, historia, ...configToSave } = config; 
-    await supabase.from('site_config').update(configToSave).eq('id', 1); 
-    alert("Alterações salvas!"); 
+    const { error } = await supabase.from('site_config').update(configToSave).eq('id', 1); 
+    if (error) alert("Erro ao salvar textos: " + error.message); else alert("Alterações salvas!"); 
     fetchConfig(); 
     setLoading(false); 
   };
@@ -280,7 +290,7 @@ export default function App() {
     </div>
   );
 
-  const institucionais = [
+  const listInstitucionais = [
     { id: 1, titulo: config?.secao_1_titulo, texto: config?.secao_1_texto },
     { id: 2, titulo: config?.secao_2_titulo, texto: config?.secao_2_texto },
     { id: 3, titulo: config?.secao_3_titulo, texto: config?.secao_3_texto },
@@ -302,7 +312,11 @@ export default function App() {
           </nav>
 
           <div className="header-actions">
-            <button className="menu-toggle-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>☰</button>
+            <button className="menu-toggle-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              <svg viewBox="0 0 24 24" width="35" height="35" fill="currentColor">
+                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+              </svg>
+            </button>
           </div>
         </header>
 
@@ -346,8 +360,8 @@ export default function App() {
             )}
           </section>
 
-          <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--accent-gold)'}}>
-            {mostrarEstoqueCompleto ? "Nosso Estoque Completo" : "Top Cars do Nosso Estoque"}
+          <h2 id="estoque" className="sec-title">
+            {mostrarEstoqueCompleto ? "NOSSO ESTOQUE COMPLETO" : "TOP CARS DO NOSSO ESTOQUE"}
           </h2>
 
           <div className="car-grid">
@@ -361,7 +375,7 @@ export default function App() {
                       {v.galeria.map((midia: any, index: number) => (
                         <div key={index} className="media-slide">
                           {midia?.tipo === 'video' ? (
-                            <video src={midia?.url} controls className="media-real-img" />
+                            <video src={`${midia?.url}#t=0.001`} controls preload="metadata" className="media-real-img" />
                           ) : (
                             <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia?.url)} />
                           )}
@@ -395,7 +409,7 @@ export default function App() {
                     </div>
                   )}
 
-                  <div className="card-divider"></div>
+                  <div className="card-divider" />
                   
                   <div className="car-footer">
                     <div className="price-container">
@@ -418,11 +432,11 @@ export default function App() {
 
           {Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
-              <h2 className="sec-title" style={{color: 'var(--accent-gold)'}}>Resplande Life</h2>
-              <div className="videos-carousel" ref={videosRef}>
+              <h2 className="sec-title">RESPLANDE LIFE</h2>
+              <div className="videos-carousel">
                 {videosGaleria.map(vid => (
                   <div key={vid.id} className="video-card-slide">
-                    <video src={vid.url} controls preload="metadata" className="video-player-public" />
+                    <video src={`${vid.url}#t=0.001`} controls preload="metadata" className="video-player-public" />
                     <div className="video-info">
                       <h4>{vid.titulo || "Experiência Resplande"}</h4>
                       {vid.descricao && <p>{vid.descricao}</p>}
@@ -434,7 +448,7 @@ export default function App() {
           )}
 
           <section id="depoimentos" className="sec-entregas">
-            <h2 className="sec-title">Nossos Clientes</h2>
+            <h2 className="sec-title">NOSSOS CLIENTES</h2>
             <div className="stats-dashboard">
               <div className="stat-box" style={{width: '100%'}}>
                 <span className="stat-number">+{config?.vendas_contador || 0}</span>
@@ -470,9 +484,9 @@ export default function App() {
                 <textarea placeholder="Como foi sua experiência?" value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
                 <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
                 <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
-                {loading && (
+                {loading && uploadProgress > 0 && (
                   <div className="progress-bar-container">
-                    <div className="progress-bar-fill" style={{ width: uploadProgress + '%' }}></div>
+                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
                   </div>
                 )}
                 <button type="submit" className="btn-submit-car" disabled={loading}>
@@ -487,11 +501,11 @@ export default function App() {
             <p className="motivational-text">{FRASES_MOTIVACIONAIS[fraseAtiva]}</p>
           </section>
 
-          {institucionais.length > 0 && (
+          {Array.isArray(listInstitucionais) && listInstitucionais.length > 0 && (
             <section id="sobre" className="about-accordion-section">
-              <h2 className="sec-title">Conheça a Resplande</h2>
+              <h2 className="sec-title">CONHEÇA A RESPLANDE</h2>
               <div className="accordion-wrapper">
-                {institucionais.map((item) => (
+                {listInstitucionais.map((item) => (
                   <div key={item.id} className={`accordion-item ${activeAccordion === item.id ? 'open' : ''}`}>
                     <div className="accordion-header" onClick={() => setActiveAccordion(activeAccordion === item.id ? null : item.id)}>
                       <span>{item.titulo}</span>
@@ -537,7 +551,7 @@ export default function App() {
     <div className="app-admin">
       <header className="header-main">
         <HeaderLogo />
-        <button className="btn-admin-access" onClick={() => setView('public')}>Ver Site</button>
+        <button className="btn-admin-access" style={{display: 'block'}} onClick={() => setView('public')}>SAIR DO ADMIN</button>
       </header>
       
       <nav className="admin-nav">
@@ -554,16 +568,16 @@ export default function App() {
           <div>
             <h3>Página Inicial, Links e Banners</h3>
             <label>Título Principal</label>
-            <input value={config.hero_title || ''} onChange={e => setConfig({...config, hero_title: e.target.value})} />
+            <input value={config?.hero_title || ''} onChange={e => setConfig({...config, hero_title: e.target.value})} />
             
             <label>WhatsApp (Ex: 5585996359338 - Apenas números)</label>
-            <input value={config.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value.replace(/\D/g, '')})} />
+            <input value={config?.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value.replace(/\D/g, '')})} />
             
             <label>Link do Instagram (Ex: https://instagram.com/resplandeveiculos)</label>
-            <input value={config.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} />
+            <input value={config?.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} />
             
             <label>Estatística "Veículos Vendidos"</label>
-            <input type="number" value={config.vendas_contador || 0} onChange={e => setConfig({...config, vendas_contador: Number(e.target.value)})} />
+            <input type="number" value={config?.vendas_contador || 0} onChange={e => setConfig({...config, vendas_contador: Number(e.target.value)})} />
             
             <button className="btn-submit-car" onClick={salvarConfig} disabled={loading}>{loading ? 'Salvando...' : 'Salvar Globais'}</button>
 
@@ -686,9 +700,9 @@ export default function App() {
             
             <input type="file" multiple accept="image/*,video/*" onChange={e => setArquivos(Array.from(e.target.files || []))} />
             
-            {loading && (
+            {loading && uploadProgress > 0 && (
               <div className="progress-bar-container">
-                <div className="progress-bar-fill" style={{ width: uploadProgress + '%' }}></div>
+                <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
               </div>
             )}
             
@@ -709,7 +723,7 @@ export default function App() {
                        {v.galeria[0].tipo === 'foto' ? (
                          <img src={v.galeria[0].url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                        ) : (
-                         <video src={v.galeria[0].url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                         <video src={`${v.galeria[0].url}#t=0.001`} preload="metadata" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                        )}
                      </div>
                    ) : (
@@ -761,9 +775,9 @@ export default function App() {
               
               <input type="file" accept="video/*" onChange={e => setVidForm({...vidForm, file: e.target.files?.[0] || null})} required={!editingVideoId} />
               
-              {loading && (
+              {loading && uploadProgress > 0 && (
                 <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: uploadProgress + '%' }}></div>
+                  <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
                 </div>
               )}
               
@@ -775,7 +789,7 @@ export default function App() {
             <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
               {Array.isArray(videosGaleria) && videosGaleria.map(vid => (
                 <div key={vid.id} style={{position: 'relative', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden', background: '#0a0a0a'}}>
-                  <video src={vid.url} preload="metadata" style={{width: '100%', height: '180px', objectFit: 'cover', display: 'block'}} />
+                  <video src={`${vid.url}#t=0.001`} preload="metadata" style={{width: '100%', height: '180px', objectFit: 'cover', display: 'block'}} />
                   <div style={{padding: '10px'}}>
                     <strong style={{color: '#cfa44c', display: 'block', fontSize: '14px', textTransform: 'uppercase'}}>{vid.titulo}</strong>
                     <p style={{fontSize: '12px', color: '#888', marginTop: '3px'}}>{vid.descricao}</p>
@@ -801,9 +815,9 @@ export default function App() {
               <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px'}}>Envie seu momento conosco (Foto do Cliente)</label>
               <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
               
-              {loading && (
+              {loading && uploadProgress > 0 && (
                 <div className="progress-bar-container">
-                  <div className="progress-bar-fill" style={{ width: uploadProgress + '%' }}></div>
+                  <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
                 </div>
               )}
               

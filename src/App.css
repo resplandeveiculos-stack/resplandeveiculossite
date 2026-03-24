@@ -19,18 +19,17 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 
 /* ================= HEADER, LOGO E MENU HAMBÚRGUER ================= */
 .header-main { position: sticky; top: 0; z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-.brand-zone { display: flex; align-items: center; gap: 12px; }
+.brand-zone { display: flex; align-items: center; gap: 12px; pointer-events: none;}
 .brand-logo-img { height: 42px; width: auto; object-fit: contain; }
 .brand-text-container { display: flex; align-items: center; transform: scaleX(1.25); transform-origin: left center; }
 .brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 16px; font-weight: 400; color: var(--text-primary); margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; }
 .brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: var(--accent-gold); margin-left: 6px; text-transform: uppercase; }
 
-/* O SEGREDÃO DO CLIQUE NO MENU */
-.header-actions { position: relative; z-index: 99999; }
-.menu-toggle-btn { background: transparent; border: none; color: var(--accent-gold); font-size: 32px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; outline: none; }
+/* O SEGREDÃO DO CLIQUE NO MENU: Pointer events no botão */
+.header-actions { position: relative; z-index: 999999; }
+.menu-toggle-btn { background: transparent; border: none; color: var(--accent-gold); cursor: pointer; padding: 10px; margin-right: -10px; display: flex; align-items: center; justify-content: center; outline: none; pointer-events: auto;}
 
 .desktop-top-nav { display: none; }
-.btn-admin-access { display: none; } /* Admin só aparece dentro do menu agora */
 
 /* MENU DROPDOWN MOBILE */
 .mobile-dropdown-menu { position: absolute; top: 70px; right: 20px; background: rgba(15,15,15,0.98); backdrop-filter: blur(10px); border: 1px solid var(--accent-gold); border-radius: 8px; z-index: 99999; display: flex; flex-direction: column; padding: 10px 0; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -38,6 +37,10 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .mobile-dropdown-menu a:hover { color: var(--accent-gold); background: #1a1a1a; }
 .menu-admin-btn { background: transparent; border: none; color: var(--accent-gold); padding: 15px 20px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; cursor: pointer; border-top: 1px solid #333; margin-top: 5px; outline: none; }
 .menu-admin-btn:hover { background: #1a1a1a; }
+
+/* Botão Sair do Admin */
+.btn-admin-access { background: transparent; border: 1px solid var(--border-color); color: white; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; pointer-events: auto;}
+.btn-admin-access:hover { background: var(--danger); border-color: var(--danger); }
 
 /* ================= LAYOUT PRINCIPAL E BANNERS ================= */
 .content-main { padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
@@ -116,9 +119,9 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .video-info { padding: 15px; border-top: 1px solid var(--border-color);}
 .video-info h4 { color: var(--text-primary); margin-bottom: 5px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
 
-/* ================= NOSSOS CLIENTES (AVALIAÇÕES - CARROSSEL) ================= */
+/* ================= NOSSOS CLIENTES (AVALIAÇÕES) ================= */
 .sec-entregas { margin-top: 20px; padding-top: 30px; border-top: 1px solid var(--border-color); }
-.sec-title { text-align: center; margin-bottom: 25px; font-size: 22px; color: var(--text-primary); font-weight: 700;}
+.sec-title { text-align: center; margin-bottom: 25px; font-size: 22px; color: var(--text-primary); font-weight: 700; text-transform: uppercase;}
 .stats-dashboard { display: flex; justify-content: space-around; align-items: center; background: #111; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 30px; }
 .stat-box { text-align: center; }
 .stat-number { font-size: 28px; color: var(--accent-gold); font-weight: 700; display: block; line-height: 1.1; margin-bottom: 4px; }

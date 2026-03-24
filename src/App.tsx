@@ -26,7 +26,7 @@ const FRASES_MOTIVACIONAIS = [
   "Mais que um veículo, entregamos segurança e confiança para o seu caminho."
 ];
 
-// Função blindada contra erros
+// Funções blindadas contra dados corrompidos
 const formatCurrencyBR = (value: any) => {
   let v = String(value || '').replace(/\D/g, ''); 
   if (!v) return '';
@@ -35,7 +35,6 @@ const formatCurrencyBR = (value: any) => {
   return v;
 };
 
-// Função blindada contra erros
 const sanitizeNumber = (str: any) => Number(String(str || '').replace(/\D/g, ''));
 
 export default function App() {
@@ -73,16 +72,17 @@ export default function App() {
   const [fraseAtiva, setFraseAtiva] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const videosRef = useRef<HTMLDivElement>(null);
-  const bannersRef = useRef<HTMLDivElement>(null);
+  // 'any' protege contra falhas de compilação do Vercel caso as refs não montem
+  const carouselRef = useRef<any>(null);
+  const videosRef = useRef<any>(null);
+  const bannersRef = useRef<any>(null);
 
   useEffect(() => { 
     fetchConfig(); fetchVeiculos(); fetchAvaliacoes(); fetchVideos(); fetchBanners(); 
   }, []);
 
   useEffect(() => {
-    const scrollCarousel = (ref: React.RefObject<HTMLDivElement>, step: number) => {
+    const scrollCarousel = (ref: any, step: number) => {
       if (ref.current && view === 'public') {
         const { scrollLeft, scrollWidth, clientWidth } = ref.current;
         if (scrollLeft + clientWidth >= scrollWidth - 10) ref.current.scrollTo({ left: 0, behavior: 'smooth' });
@@ -101,29 +101,17 @@ export default function App() {
     return () => { clearInterval(intervalCarousels); clearInterval(intervalFrases); }
   }, [view, avaliacoes, videosGaleria, banners]);
 
-  async function fetchConfig() { 
-    const { data } = await supabase.from('site_config').select('*').eq('id', 1).maybeSingle(); 
-    if (data) setConfig(data); 
-  }
-  async function fetchVeiculos() { 
-    const { data } = await supabase.from('veiculos').select('*').order('id', { ascending: false }); 
-    if (data) setVeiculos(data); 
-  }
-  async function fetchAvaliacoes() { 
-    const { data } = await supabase.from('avaliacoes').select('*').order('id', { ascending: false }); 
-    if (data) setAvaliacoes(data); 
-  }
-  async function fetchVideos() { 
-    const { data } = await supabase.from('galeria_videos').select('*').order('id', { ascending: false }); 
-    if (data) setVideosGaleria(data); 
-  }
-  async function fetchBanners() { 
-    const { data } = await supabase.from('banners').select('*').order('id', { ascending: true }); 
-    if (data) setBanners(data); 
-  }
+  // Try-catch nas requisições para evitar telas pretas por falha de banco
+  async function fetchConfig() { try { const { data } = await supabase.from('site_config').select('*').eq('id', 1).maybeSingle(); if (data) setConfig(data); } catch (e) {} }
+  async function fetchVeiculos() { try { const { data } = await supabase.from('veiculos').select('*').order('id', { ascending: false }); if (data) setVeiculos(data); } catch (e) {} }
+  async function fetchAvaliacoes() { try { const { data } = await supabase.from('avaliacoes').select('*').order('id', { ascending: false }); if (data) setAvaliacoes(data); } catch (e) {} }
+  async function fetchVideos() { try { const { data } = await supabase.from('galeria_videos').select('*').order('id', { ascending: false }); if (data) setVideosGaleria(data); } catch (e) {} }
+  async function fetchBanners() { try { const { data } = await supabase.from('banners').select('*').order('id', { ascending: true }); if (data) setBanners(data); } catch (e) {} }
 
-  // Filtragem protegida contra dados nulos
-  const veiculosFiltrados = veiculos.filter(v => {
+  // Array.isArray garante que o .filter só rode se 'veiculos' for realmente uma lista
+  const listaVeiculos = Array.isArray(veiculos) ? veiculos : [];
+  
+  const veiculosFiltrados = listaVeiculos.filter(v => {
     if (v.status !== 'Disponível') return false;
     
     const matchMarca = filtroMarca === '' || v.marca === filtroMarca;
@@ -151,7 +139,7 @@ export default function App() {
   const veiculosExibidos = mostrarEstoqueCompleto ? veiculosFiltrados : veiculosFiltrados.slice(0, 5);
 
   const getWhatsAppLink = (msg?: string) => {
-    const rawNumber = String(config.whatsapp || '5585996359338');
+    const rawNumber = String(config?.whatsapp || '5585996359338');
     const cleanNumber = rawNumber.replace(/\D/g, ''); 
     return `https://wa.me/${cleanNumber}${msg ? `?text=${msg}` : ''}`;
   };
@@ -162,10 +150,12 @@ export default function App() {
   };
 
   async function uploadMidiaSingle(file: File) {
-    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`; 
-    const { data, error } = await supabase.storage.from('veiculos-media').upload(fileName, file);
-    if (!error && data) return supabase.storage.from('veiculos-media').getPublicUrl(fileName).data.publicUrl;
-    return null;
+    try {
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`; 
+      const { data, error } = await supabase.storage.from('veiculos-media').upload(fileName, file);
+      if (!error && data) return supabase.storage.from('veiculos-media').getPublicUrl(fileName).data.publicUrl;
+      return null;
+    } catch (e) { return null; }
   }
 
   // --- ADMIN STATE & FUNCTIONS ---
@@ -179,10 +169,7 @@ export default function App() {
   });
 
   const prepararEdicaoVeiculo = (v: Veiculo) => { 
-    setForm({ ...v }); 
-    setEditingId(v.id || null); 
-    setAdminTab('novo_veiculo'); 
-    setArquivos([]); 
+    setForm({ ...v }); setEditingId(v.id || null); setAdminTab('novo_veiculo'); setArquivos([]); 
   };
 
   const cancelarEdicaoVeiculo = () => {
@@ -192,8 +179,7 @@ export default function App() {
       ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, 
       combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] 
     });
-    setEditingId(null); 
-    setArquivos([]);
+    setEditingId(null); setArquivos([]);
   };
 
   const salvarVeiculo = async (e: React.FormEvent) => {
@@ -202,7 +188,7 @@ export default function App() {
     
     setLoading(true); setUploadProgress(10);
     
-    let novaGaleria = form.galeria || []; 
+    let novaGaleria = Array.isArray(form.galeria) ? form.galeria : []; 
     if (arquivos.length > 0) {
       novaGaleria = [];
       for (let i = 0; i < arquivos.length; i++) {
@@ -295,10 +281,10 @@ export default function App() {
   );
 
   const institucionais = [
-    { id: 1, titulo: config.secao_1_titulo, texto: config.secao_1_texto },
-    { id: 2, titulo: config.secao_2_titulo, texto: config.secao_2_texto },
-    { id: 3, titulo: config.secao_3_titulo, texto: config.secao_3_texto },
-    { id: 4, titulo: config.secao_4_titulo, texto: config.secao_4_texto }
+    { id: 1, titulo: config?.secao_1_titulo, texto: config?.secao_1_texto },
+    { id: 2, titulo: config?.secao_2_titulo, texto: config?.secao_2_texto },
+    { id: 3, titulo: config?.secao_3_titulo, texto: config?.secao_3_texto },
+    { id: 4, titulo: config?.secao_4_titulo, texto: config?.secao_4_texto }
   ].filter(item => item.titulo);
 
   // ================= VIEW PÚBLICA =================
@@ -332,11 +318,11 @@ export default function App() {
 
         <main className="content-main">
           <section className="hero-section">
-            <h2>{config.hero_title}</h2>
+            <h2>{config?.hero_title}</h2>
             <p className="hero-subtitle">Há 4 anos realizando negócios com solidez e honestidade.</p>
           </section>
 
-          {banners.length > 0 && (
+          {Array.isArray(banners) && banners.length > 0 && (
             <div className="banners-carousel" ref={bannersRef}>
               {banners.map(b => (
                 <div key={b.id} className="banner-slide">
@@ -372,12 +358,12 @@ export default function App() {
                   
                   {Array.isArray(v.galeria) && v.galeria.length > 0 ? (
                     <div className="media-scroller">
-                      {v.galeria.map((midia, index) => (
+                      {v.galeria.map((midia: any, index: number) => (
                         <div key={index} className="media-slide">
-                          {midia.tipo === 'video' ? (
-                            <video src={midia.url} controls className="media-real-img" />
+                          {midia?.tipo === 'video' ? (
+                            <video src={midia?.url} controls className="media-real-img" />
                           ) : (
-                            <img src={midia.url} className="media-real-img clickable-img" alt={v.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia.url)} />
+                            <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia?.url)} />
                           )}
                         </div>
                       ))}
@@ -430,7 +416,7 @@ export default function App() {
             </div>
           )}
 
-          {videosGaleria.length > 0 && (
+          {Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
               <h2 className="sec-title" style={{color: 'var(--accent-gold)'}}>Resplande Life</h2>
               <div className="videos-carousel" ref={videosRef}>
@@ -451,13 +437,13 @@ export default function App() {
             <h2 className="sec-title">Nossos Clientes</h2>
             <div className="stats-dashboard">
               <div className="stat-box" style={{width: '100%'}}>
-                <span className="stat-number">+{config.vendas_contador}</span>
+                <span className="stat-number">+{config?.vendas_contador || 0}</span>
                 <span className="stat-label">veículos vendidos com procedência</span>
               </div>
             </div>
             
             <div className="entregas-carousel" ref={carouselRef}>
-              {avaliacoes.filter(a => a.aprovado === true || String(a.aprovado) === 'true').map(a => (
+              {Array.isArray(avaliacoes) && avaliacoes.filter(a => a?.aprovado === true || String(a?.aprovado) === 'true').map(a => (
                 <div key={a.id} className="entrega-card-slide">
                   {a.foto_url ? (
                     <img src={a.foto_url} className="entrega-img clickable-img" alt="Cliente" onClick={() => setExpandedImage(a.foto_url)} />
@@ -522,7 +508,7 @@ export default function App() {
         </main>
         
         <div className="floating-buttons">
-          {config.instagram && (
+          {config?.instagram && (
             <a href={config.instagram} className="fab-insta" target="_blank" rel="noreferrer">
               <svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor">
                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -566,7 +552,7 @@ export default function App() {
       <main className="admin-box">
         {adminTab === 'inicio' && (
           <div>
-            <h3>Página Inicial e Links</h3>
+            <h3>Página Inicial, Links e Banners</h3>
             <label>Título Principal</label>
             <input value={config.hero_title || ''} onChange={e => setConfig({...config, hero_title: e.target.value})} />
             
@@ -587,7 +573,7 @@ export default function App() {
             {loading && <div style={{color: 'var(--accent-gold)'}}>Enviando banner...</div>}
             
             <div style={{display: 'flex', gap: '10px', overflowX: 'auto', marginTop: '15px'}}>
-              {banners.map(b => (
+              {Array.isArray(banners) && banners.map(b => (
                 <div key={b.id} style={{position: 'relative', width: '150px', flexShrink: 0}}>
                   <img src={b.url} style={{width: '100%', borderRadius: '8px'}} />
                   <button onClick={() => deletarBanner(b.id)} style={{position: 'absolute', top: 5, right: 5, background: '#ff4d4d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>X</button>
@@ -668,22 +654,27 @@ export default function App() {
 
             <div style={{background: '#111', padding: '15px', borderRadius: '8px', border: '1px solid #262626', margin: '20px 0'}}>
               <label style={{color: '#cfa44c', marginBottom: '10px'}}>Diferenciais e Tags</label>
+              
               <div className="checkbox-row">
                 <input type="checkbox" checked={form.unico_dono || false} onChange={e => setForm({...form, unico_dono: e.target.checked})} />
                 <label>Único Dono</label>
               </div>
+              
               <div className="checkbox-row">
                 <input type="checkbox" checked={form.revisoes_concessionaria || false} onChange={e => setForm({...form, revisoes_concessionaria: e.target.checked})} />
                 <label>Revisões em Concessionária</label>
               </div>
+              
               <div className="checkbox-row">
                 <input type="checkbox" checked={form.laudo_cautelar || false} onChange={e => setForm({...form, laudo_cautelar: e.target.checked})} />
                 <label>Laudo Cautelar Aprovado</label>
               </div>
+              
               <div className="checkbox-row">
                 <input type="checkbox" checked={form.ipva_pago || false} onChange={e => setForm({...form, ipva_pago: e.target.checked})} />
                 <label>IPVA Pago</label>
               </div>
+              
               <div className="checkbox-row" style={{marginBottom: 0, marginTop: '10px', borderTop: '1px solid #333', paddingTop: '10px'}}>
                 <input type="checkbox" checked={form.blindado || false} onChange={e => setForm({...form, blindado: e.target.checked})} />
                 <label>Blindado (Aparece na Foto)</label>
@@ -711,7 +702,7 @@ export default function App() {
           <div>
             <h3>Gerenciar Estoque</h3>
             <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-              {veiculos.map(v => (
+              {Array.isArray(veiculos) && veiculos.map(v => (
                 <div key={v.id} style={{background: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', gap: '15px'}}>
                    {Array.isArray(v.galeria) && v.galeria[0] ? (
                      <div style={{width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0}}>
@@ -782,7 +773,7 @@ export default function App() {
             </form>
             
             <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
-              {videosGaleria.map(vid => (
+              {Array.isArray(videosGaleria) && videosGaleria.map(vid => (
                 <div key={vid.id} style={{position: 'relative', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden', background: '#0a0a0a'}}>
                   <video src={vid.url} preload="metadata" style={{width: '100%', height: '180px', objectFit: 'cover', display: 'block'}} />
                   <div style={{padding: '10px'}}>
@@ -821,7 +812,7 @@ export default function App() {
               </button>
             </form>
             
-            {avaliacoes.map(a => (
+            {Array.isArray(avaliacoes) && avaliacoes.map(a => (
               <div key={a.id} style={{background: '#1a1a1a', padding: '15px', borderRadius: '8px', marginBottom: '10px', border: '1px solid #333', display: 'flex', gap: '15px'}}>
                 {a.foto_url && <img src={a.foto_url} style={{width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px'}} />}
                 <div style={{flex: 1}}>

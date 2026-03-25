@@ -73,7 +73,9 @@ export default function App() {
   const [pubReview, setPubReview] = useState({ nome: '', texto: '' });
   const [pubReviewFile, setPubReviewFile] = useState<File | null>(null);
 
-  const [mostrarEstoqueCompleto, setMostrarEstoqueCompleto] = useState(false);
+  const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender'>('home');
+  const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', km: '' });
+
   const [fraseAtiva, setFraseAtiva] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -86,7 +88,7 @@ export default function App() {
 
   useEffect(() => {
     const scrollCarousel = (element: HTMLDivElement | null, step: number) => {
-      if (element && view === 'public') {
+      if (element && view === 'public' && publicTab === 'home') {
         const { scrollLeft, scrollWidth, clientWidth } = element;
         if (scrollLeft + clientWidth >= scrollWidth - 10) element.scrollTo({ left: 0, behavior: 'smooth' });
         else element.scrollBy({ left: step, behavior: 'smooth' });
@@ -101,7 +103,7 @@ export default function App() {
     const intervalFrases = setInterval(() => setFraseAtiva((prev) => (prev + 1) % FRASES_MOTIVACIONAIS.length), 5000);
 
     return () => { clearInterval(intervalCarousels); clearInterval(intervalFrases); }
-  }, [view]);
+  }, [view, publicTab]);
 
   async function fetchConfig() { try { const { data } = await supabase.from('site_config').select('*').eq('id', 1).maybeSingle(); if (data) setConfig(data); } catch (e) {} }
   async function fetchVeiculos() { try { const { data } = await supabase.from('veiculos').select('*').order('id', { ascending: false }); if (data) setVeiculos(data); } catch (e) {} }
@@ -136,7 +138,7 @@ export default function App() {
     return matchMarca && matchAno && matchKm && matchPreco && matchCombustivel && matchCambio && matchTipo;
   });
 
-  const veiculosExibidos = mostrarEstoqueCompleto ? veiculosFiltrados : veiculosFiltrados.slice(0, 5);
+  const veiculosExibidos = publicTab === 'estoque' ? veiculosFiltrados : veiculosFiltrados.slice(0, 3);
 
   const getWhatsAppLink = (msg?: string) => {
     const rawNumber = String(config?.whatsapp || '5585996359338');
@@ -282,12 +284,12 @@ export default function App() {
 
   const handleLogoClick = () => {
     setView('public');
-    setMostrarEstoqueCompleto(false);
+    setPublicTab('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const HeaderLogo = () => (
-    <div className="brand-zone" onClick={handleLogoClick}>
+    <div className="brand-zone" onClick={handleLogoClick} style={{cursor: 'pointer', pointerEvents: 'auto'}}>
       <img src="https://i.imgur.com/eczLsJ5.png" alt="Logo Resplande" className="brand-logo-img" />
       <div className="brand-text-container">
         <h1 className="brand-name">RESPLANDE<span className="brand-sub">VEÍCULOS</span></h1>
@@ -310,11 +312,12 @@ export default function App() {
           <HeaderLogo />
           
           <nav className="desktop-top-nav">
-            <a href="#inicio" onClick={(e) => { e.preventDefault(); setMostrarEstoqueCompleto(false); window.scrollTo(0,0); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setMostrarEstoqueCompleto(true); window.scrollTo(0,0); }}>Estoque</a>
-            <a href="#resplife" onClick={() => setMostrarEstoqueCompleto(false)}>#RespLife</a>
-            <a href="#depoimentos" onClick={() => setMostrarEstoqueCompleto(false)}>Depoimentos</a>
-            <a href="#sobre" onClick={() => setMostrarEstoqueCompleto(false)}>Sobre nós</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Estoque</a>
+            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender Veículo</a>
+            <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
+            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
+            <a href="#sobre" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
           </nav>
 
           <div className="header-actions">
@@ -328,123 +331,178 @@ export default function App() {
 
         {isMobileMenuOpen && (
           <nav className="mobile-dropdown-menu">
-            <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); window.scrollTo(0,0); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(true); window.scrollTo(0,0); }}>Estoque</a>
-            <a href="#resplife" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>#RespLife</a>
-            <a href="#depoimentos" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>Depoimentos</a>
-            <a href="#sobre" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>Sobre nós</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('estoque'); window.scrollTo(0,0); }}>Estoque</a>
+            <a href="#vender" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
+            <a href="#resplife" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
+            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
+            <a href="#sobre" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
             <button className="menu-admin-btn" onClick={() => { setIsMobileMenuOpen(false); setView('admin'); }}>⚙️ Admin</button>
           </nav>
         )}
 
         <main className="content-main">
-          
-          {!mostrarEstoqueCompleto && (
-            <>
-              <section className="hero-section" id="inicio">
-                <h2>{config?.hero_title}</h2>
-                <p className="hero-subtitle">{config?.hero_subtitle || 'Há 4 anos realizando negócios com solidez e honestidade.'}</p>
-              </section>
 
-              {Array.isArray(banners) && banners.length > 0 && (
-                <div className="banners-carousel" ref={bannersRef}>
-                  {banners.map(b => (
-                    <div key={b.id} className="banner-slide">
-                      <img src={b.url} alt="Banner" />
+          {/* ================= TELA: VENDER VEÍCULO ================= */}
+          {publicTab === 'vender' && (
+            <>
+              <div style={{marginBottom: '20px'}}>
+                <button className="btn-voltar" onClick={() => { setPublicTab('home'); window.scrollTo(0,0); }}>
+                  ⬅ Voltar à Página Inicial
+                </button>
+              </div>
+
+              <section className="filter-panel-refined" style={{marginTop: '10px', textAlign: 'center'}}>
+                <h2 className="sec-title" style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>Venda seu Veículo</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '25px' }}>
+                  Preencha os dados do seu carro e fale direto com a nossa equipe pelo WhatsApp!
+                </p>
+                
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const msg = encodeURIComponent(`Olá! Tenho interesse em vender meu veículo.\n\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nKM: ${formVender.km}`);
+                  window.open(getWhatsAppLink(msg), '_blank');
+                }} className="public-review-form" style={{ textAlign: 'left' }}>
+                  
+                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
+                  <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
+                  
+                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
+                  <input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
+                  
+                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
+                  <input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
+                  
+                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
+                  <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
+                  
+                  <button type="submit" className="btn-submit-car" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
+                </form>
+              </section>
+            </>
+          )}
+
+          {/* ================= TELA: ESTOQUE COMPLETO ================= */}
+          {publicTab === 'estoque' && (
+            <>
+              <div style={{marginBottom: '20px'}}>
+                <button className="btn-voltar" onClick={() => { setPublicTab('home'); window.scrollTo(0,0); }}>
+                  ⬅ Voltar à Página Inicial
+                </button>
+              </div>
+
+              <section className="filter-panel-refined">
+                <div className="filter-grid-6">
+                  <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+                  <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
+                  <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
+                  <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
+                  <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+                  <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
+                </div>
+                {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
+                  <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
+                )}
+              </section>
+            </>
+          )}
+
+          {/* ================= HOME E VITRINE (Aparecem na Home e no Estoque) ================= */}
+          {(publicTab === 'home' || publicTab === 'estoque') && (
+            <>
+              {publicTab === 'home' && (
+                <>
+                  <section className="hero-section" id="inicio">
+                    <h2>{config?.hero_title}</h2>
+                    <p className="hero-subtitle">{config?.hero_subtitle || 'Há 4 anos realizando negócios com solidez e honestidade.'}</p>
+                  </section>
+
+                  {Array.isArray(banners) && banners.length > 0 && (
+                    <div className="banners-carousel" ref={bannersRef}>
+                      {banners.map(b => (
+                        <div key={b.id} className="banner-slide">
+                          <img src={b.url} alt="Banner" />
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                </>
+              )}
+
+              <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--accent-gold)'}}>
+                {publicTab === 'estoque' ? (config?.titulo_estoque || "NOSSO ESTOQUE COMPLETO") : (config?.titulo_top_cars || "TOP CARS DO NOSSO ESTOQUE")}
+              </h2>
+
+              <div className="car-grid">
+                {veiculosExibidos.map(v => (
+                  <div key={v.id} className="car-card">
+                    <div className="car-media-slider">
+                      {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
+                      
+                      {Array.isArray(v.galeria) && v.galeria.length > 0 ? (
+                        <div className="media-scroller">
+                          {v.galeria.map((midia: any, index: number) => (
+                            <div key={index} className="media-slide">
+                              {midia?.tipo === 'video' ? (
+                                <video src={`${midia?.url}#t=0.001`} controls preload="metadata" className="media-real-img" />
+                              ) : (
+                                <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia?.url)} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : <div className="img-placeholder">RESPLANDE</div>}
+                      {Array.isArray(v.galeria) && v.galeria.length > 1 && <div className="swipe-hint">deslize ➔</div>}
+                    </div>
+                    
+                    <div className="car-details">
+                      <div className="car-header-center">
+                        <span className="car-marca-label">{v.marca}</span>
+                        <h3 className="car-model-title">{v.modelo}</h3>
+                      </div>
+                      
+                      <div className="car-meta">
+                        <span>{v.fabricacao}</span><span className="separator">|</span>
+                        <span>{v.km} km</span><span className="separator">|</span>
+                        <span>{v.combustivel || 'Flex'}</span><span className="separator">|</span>
+                        <span>{v.cambio || 'Automático'}</span><span className="separator">|</span>
+                        <span>{v.tipo_carro || 'Hatch'}</span>
+                      </div>
+                      
+                      {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria) && (
+                        <div className="car-tags-container-left">
+                          {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
+                          {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões Concessionária</span>}
+                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar</span>}
+                          {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA Pago</span>}
+                        </div>
+                      )}
+
+                      <div className="card-divider"></div>
+                      
+                      <div className="car-footer">
+                        <div className="price-container">
+                          {v.em_promocao && v.preco_antigo && <span className="car-price-old">De R$ {v.preco_antigo} por</span>}
+                          <span className="car-price">R$ {v.preco}</span>
+                        </div>
+                        <button className="btn-interesse" onClick={() => handleInteresse(v)}>Interesse</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: '#666', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
+              </div>
+
+              {publicTab === 'home' && veiculosFiltrados.length > 3 && (
+                <div style={{textAlign: 'center', margin: '40px 0'}}>
+                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Veja nosso estoque completo ➔</button>
                 </div>
               )}
             </>
           )}
 
-          {mostrarEstoqueCompleto && (
-            <section className="filter-panel-refined" style={{marginTop: '20px'}}>
-              <div className="filter-grid-6">
-                <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
-                <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
-                <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
-                <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-                <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
-              </div>
-              {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
-                <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
-              )}
-            </section>
-          )}
-
-          <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--accent-gold)'}}>
-            {mostrarEstoqueCompleto ? (config?.titulo_estoque || "NOSSO ESTOQUE COMPLETO") : (config?.titulo_top_cars || "TOP CARS DO NOSSO ESTOQUE")}
-          </h2>
-
-          <div className="car-grid">
-            {veiculosExibidos.map(v => (
-              <div key={v.id} className="car-card">
-                <div className="car-media-slider">
-                  {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
-                  
-                  {Array.isArray(v.galeria) && v.galeria.length > 0 ? (
-                    <div className="media-scroller">
-                      {v.galeria.map((midia: any, index: number) => (
-                        <div key={index} className="media-slide">
-                          {midia?.tipo === 'video' ? (
-                            <video src={`${midia?.url}#t=0.001`} controls preload="metadata" className="media-real-img" />
-                          ) : (
-                            <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia?.url)} />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : <div className="img-placeholder">RESPLANDE</div>}
-                  {Array.isArray(v.galeria) && v.galeria.length > 1 && <div className="swipe-hint">deslize ➔</div>}
-                </div>
-                
-                <div className="car-details">
-                  <div className="car-header-center">
-                    <span className="car-marca-label">{v.marca}</span>
-                    <h3 className="car-model-title">{v.modelo}</h3>
-                  </div>
-                  
-                  <div className="car-meta">
-                    <span>{v.fabricacao}</span><span className="separator">|</span>
-                    <span>{v.km} km</span><span className="separator">|</span>
-                    <span>{v.combustivel || 'Flex'}</span><span className="separator">|</span>
-                    <span>{v.cambio || 'Automático'}</span><span className="separator">|</span>
-                    <span>{v.tipo_carro || 'Hatch'}</span>
-                  </div>
-                  
-                  {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria) && (
-                    <div className="car-tags-container-left">
-                      {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
-                      {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões Concessionária</span>}
-                      {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar</span>}
-                      {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA Pago</span>}
-                    </div>
-                  )}
-
-                  <div className="card-divider"></div>
-                  
-                  <div className="car-footer">
-                    <div className="price-container">
-                      {v.em_promocao && v.preco_antigo && <span className="car-price-old">De R$ {v.preco_antigo} por</span>}
-                      <span className="car-price">R$ {v.preco}</span>
-                    </div>
-                    <button className="btn-interesse" onClick={() => handleInteresse(v)}>Interesse</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: '#666', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
-          </div>
-
-          {!mostrarEstoqueCompleto && veiculosFiltrados.length > 5 && (
-            <div style={{textAlign: 'center', margin: '40px 0'}}>
-              <button className="btn-estoque-completo" onClick={() => { setMostrarEstoqueCompleto(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Veja nosso estoque completo ➔</button>
-            </div>
-          )}
-
-          {!mostrarEstoqueCompleto && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
+          {/* ================= SESSÕES COMPLEMENTARES (SÓ NA HOME) ================= */}
+          {publicTab === 'home' && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
               <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>
               <div className="videos-carousel">
@@ -461,7 +519,7 @@ export default function App() {
             </section>
           )}
 
-          {!mostrarEstoqueCompleto && (
+          {publicTab === 'home' && (
             <section id="depoimentos" className="sec-entregas">
               <h2 className="sec-title">{config?.titulo_clientes || "NOSSOS CLIENTES"}</h2>
               <div className="stats-dashboard">
@@ -512,14 +570,14 @@ export default function App() {
             </section>
           )}
 
-          {!mostrarEstoqueCompleto && (
+          {publicTab === 'home' && (
             <section className="motivational-panel">
               <h3 className="motivational-quotes">&quot;</h3>
               <p className="motivational-text">{FRASES_MOTIVACIONAIS[fraseAtiva]}</p>
             </section>
           )}
 
-          {!mostrarEstoqueCompleto && Array.isArray(listInstitucionais) && listInstitucionais.length > 0 && (
+          {publicTab === 'home' && Array.isArray(listInstitucionais) && listInstitucionais.length > 0 && (
             <section id="sobre" className="about-accordion-section">
               <h2 className="sec-title">{config?.titulo_institucional || "CONHEÇA A RESPLANDE"}</h2>
               <div className="accordion-wrapper">
@@ -568,8 +626,13 @@ export default function App() {
   return (
     <div className="app-admin">
       <header className="header-main">
-        <HeaderLogo />
-        <button className="btn-admin-access" style={{display: 'block'}} onClick={() => setView('public')}>Sair do Admin</button>
+        <div className="brand-zone" onClick={() => { setView('public'); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <img src="https://i.imgur.com/eczLsJ5.png" alt="Logo Resplande" className="brand-logo-img" />
+          <div className="brand-text-container">
+            <h1 className="brand-name">RESPLANDE<span className="brand-sub">VEÍCULOS</span></h1>
+          </div>
+        </div>
+        <button className="btn-admin-access" style={{display: 'block'}} onClick={() => { setView('public'); setPublicTab('home'); }}>Sair do Admin</button>
       </header>
       
       <nav className="admin-nav">

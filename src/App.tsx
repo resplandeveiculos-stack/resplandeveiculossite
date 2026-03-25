@@ -312,9 +312,9 @@ export default function App() {
           <HeaderLogo />
           
           <nav className="desktop-top-nav">
-            <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Estoque</a>
-            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender Veículo</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo(0,0); }}>Estoque</a>
+            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
             <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
             <a href="#sobre" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
@@ -346,12 +346,6 @@ export default function App() {
           {/* ================= TELA: VENDER VEÍCULO ================= */}
           {publicTab === 'vender' && (
             <>
-              <div style={{marginBottom: '20px'}}>
-                <button className="btn-voltar" onClick={() => { setPublicTab('home'); window.scrollTo(0,0); }}>
-                  ⬅ Voltar à Página Inicial
-                </button>
-              </div>
-
               <section className="filter-panel-refined" style={{marginTop: '10px', textAlign: 'center'}}>
                 <h2 className="sec-title" style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>Venda seu Veículo</h2>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '25px' }}>
@@ -384,30 +378,22 @@ export default function App() {
 
           {/* ================= TELA: ESTOQUE COMPLETO ================= */}
           {publicTab === 'estoque' && (
-            <>
-              <div style={{marginBottom: '20px'}}>
-                <button className="btn-voltar" onClick={() => { setPublicTab('home'); window.scrollTo(0,0); }}>
-                  ⬅ Voltar à Página Inicial
-                </button>
+            <section className="filter-panel-refined" style={{marginTop: '10px'}}>
+              <div className="filter-grid-6">
+                <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+                <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
+                <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
+                <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
+                <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+                <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
               </div>
-
-              <section className="filter-panel-refined">
-                <div className="filter-grid-6">
-                  <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                  <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
-                  <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
-                  <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
-                  <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-                  <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
-                </div>
-                {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
-                  <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
-                )}
-              </section>
-            </>
+              {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
+                <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
+              )}
+            </section>
           )}
 
-          {/* ================= HOME E VITRINE (Aparecem na Home e no Estoque) ================= */}
+          {/* HOME E ESTOQUE COMPARTILHAM A VITRINE */}
           {(publicTab === 'home' || publicTab === 'estoque') && (
             <>
               {publicTab === 'home' && (
@@ -501,7 +487,7 @@ export default function App() {
             </>
           )}
 
-          {/* ================= SESSÕES COMPLEMENTARES (SÓ NA HOME) ================= */}
+          {/* AS SESSÕES ABAIXO SÓ APARECEM NA HOME */}
           {publicTab === 'home' && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
               <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>

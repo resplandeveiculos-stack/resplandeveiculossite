@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import './App.css';
 
-interface Midia { tipo: string; url: string; }
+interface Midia { tipo: 'foto' | 'video'; url: string; }
 interface Veiculo { 
   id?: number; marca: string; modelo: string; fabricacao: string; km: string; preco: string; 
-  status: string; galeria: Midia[]; unico_dono: boolean;
+  status: 'Disponível' | 'Vendido' | 'Oculto'; galeria: Midia[]; unico_dono: boolean;
   cliente_nome?: string; depoimento_venda?: string;
   blindado?: boolean; laudo_cautelar?: boolean; ipva_pago?: boolean; revisoes_concessionaria?: boolean;
   preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
@@ -38,7 +38,7 @@ const sanitizeNumber = (str: any) => Number(String(str || '').replace(/\D/g, '')
 
 export default function App() {
   const [view, setView] = useState<'public' | 'admin'>('public');
-  const [adminTab, setAdminTab] = useState('inicio');
+  const [adminTab, setAdminTab] = useState<'inicio' | 'novo_veiculo' | 'meu_estoque' | 'videos' | 'avaliacoes' | 'institucional'>('inicio');
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); 
   
@@ -47,10 +47,16 @@ export default function App() {
   const [videosGaleria, setVideosGaleria] = useState<VideoGaleria[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [config, setConfig] = useState<any>({ 
-    hero_title: "Seu próximo carro está aqui.", 
+    hero_title: "Seu próximo carro está aqui.",
+    hero_subtitle: "Há 4 anos realizando negócios com solidez e honestidade.",
     whatsapp: "5585996359338", 
     instagram: "", 
-    vendas_contador: 180 
+    vendas_contador: 180,
+    titulo_estoque: "NOSSO ESTOQUE COMPLETO",
+    titulo_top_cars: "TOP CARS DO NOSSO ESTOQUE",
+    titulo_videos: "RESPLANDE LIFE",
+    titulo_clientes: "NOSSOS CLIENTES",
+    titulo_institucional: "CONHEÇA A RESPLANDE"
   });
 
   const [filtroMarca, setFiltroMarca] = useState('');
@@ -71,8 +77,8 @@ export default function App() {
   const [fraseAtiva, setFraseAtiva] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const carouselRef = useRef<HTMLDivElement | null>(null);
-  const bannersRef = useRef<HTMLDivElement | null>(null);
+  const carouselRef = useRef<any>(null);
+  const bannersRef = useRef<any>(null);
 
   useEffect(() => { 
     fetchConfig(); fetchVeiculos(); fetchAvaliacoes(); fetchVideos(); fetchBanners(); 
@@ -152,7 +158,6 @@ export default function App() {
     } catch (e) { return null; }
   }
 
-  // --- ADMIN STATE & FUNCTIONS ---
   const [editingId, setEditingId] = useState<number | null>(null);
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [form, setForm] = useState<Veiculo>({ 
@@ -181,7 +186,6 @@ export default function App() {
     if (arquivos.length === 0 && !editingId) { alert("Selecione pelo menos uma foto!"); return; }
     
     setLoading(true); setUploadProgress(10);
-    
     let novaGaleria = Array.isArray(form.galeria) ? form.galeria : []; 
     if (arquivos.length > 0) {
       novaGaleria = [];
@@ -192,8 +196,7 @@ export default function App() {
       }
     }
     
-    const payload = { ...form, galeria: novaGaleria }; 
-    delete payload.id; 
+    const payload = { ...form, galeria: novaGaleria }; delete payload.id; 
     
     if (editingId) { 
       const { error } = await supabase.from('veiculos').update(payload).eq('id', editingId); 
@@ -204,7 +207,6 @@ export default function App() {
       if (error) alert("Erro ao publicar! O banco recusou. Motivo: " + error.message);
       else { alert("Veículo publicado com sucesso!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
     }
-    
     setLoading(false); setUploadProgress(0);
   };
 
@@ -238,10 +240,8 @@ export default function App() {
       const {error} = await supabase.from('galeria_videos').insert([payload]); 
       if(error) alert(error.message); else { alert("Adicionado!"); cancelarEdicaoVideo(); fetchVideos(); }
     }
-    
     setLoading(false); setUploadProgress(0);
   };
-  
   const deletarVideo = async (id: number) => { if(window.confirm("Apagar vídeo?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
 
   const adicionarBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,7 +269,6 @@ export default function App() {
   
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
   const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
-  
   const handlePrecoChange = (val: string, field: 'preco' | 'preco_antigo') => { setForm({ ...form, [field]: formatCurrencyBR(val) }); };
   
   const salvarConfig = async () => { 
@@ -281,8 +280,14 @@ export default function App() {
     setLoading(false); 
   };
 
+  const handleLogoClick = () => {
+    setView('public');
+    setMostrarEstoqueCompleto(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const HeaderLogo = () => (
-    <div className="brand-zone">
+    <div className="brand-zone" onClick={handleLogoClick}>
       <img src="https://i.imgur.com/eczLsJ5.png" alt="Logo Resplande" className="brand-logo-img" />
       <div className="brand-text-container">
         <h1 className="brand-name">RESPLANDE<span className="brand-sub">VEÍCULOS</span></h1>
@@ -305,10 +310,11 @@ export default function App() {
           <HeaderLogo />
           
           <nav className="desktop-top-nav">
-            <a href="#estoque">Estoque</a>
-            <a href="#resplife">#RespLife</a>
-            <a href="#depoimentos">Depoimentos</a>
-            <a href="#sobre">Sobre nós</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setMostrarEstoqueCompleto(false); window.scrollTo(0,0); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setMostrarEstoqueCompleto(true); window.scrollTo(0,0); }}>Estoque</a>
+            <a href="#resplife" onClick={() => setMostrarEstoqueCompleto(false)}>#RespLife</a>
+            <a href="#depoimentos" onClick={() => setMostrarEstoqueCompleto(false)}>Depoimentos</a>
+            <a href="#sobre" onClick={() => setMostrarEstoqueCompleto(false)}>Sobre nós</a>
           </nav>
 
           <div className="header-actions">
@@ -322,46 +328,54 @@ export default function App() {
 
         {isMobileMenuOpen && (
           <nav className="mobile-dropdown-menu">
-            <a href="#estoque" onClick={() => setIsMobileMenuOpen(false)}>Estoque</a>
-            <a href="#resplife" onClick={() => setIsMobileMenuOpen(false)}>#RespLife</a>
-            <a href="#depoimentos" onClick={() => setIsMobileMenuOpen(false)}>Depoimentos</a>
-            <a href="#sobre" onClick={() => setIsMobileMenuOpen(false)}>Sobre nós</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); window.scrollTo(0,0); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(true); window.scrollTo(0,0); }}>Estoque</a>
+            <a href="#resplife" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>#RespLife</a>
+            <a href="#depoimentos" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>Depoimentos</a>
+            <a href="#sobre" onClick={() => { setIsMobileMenuOpen(false); setMostrarEstoqueCompleto(false); }}>Sobre nós</a>
             <button className="menu-admin-btn" onClick={() => { setIsMobileMenuOpen(false); setView('admin'); }}>⚙️ Admin</button>
           </nav>
         )}
 
         <main className="content-main">
-          <section className="hero-section">
-            <h2>{config?.hero_title}</h2>
-            <p className="hero-subtitle">Há 4 anos realizando negócios com solidez e honestidade.</p>
-          </section>
+          
+          {!mostrarEstoqueCompleto && (
+            <>
+              <section className="hero-section" id="inicio">
+                <h2>{config?.hero_title}</h2>
+                <p className="hero-subtitle">{config?.hero_subtitle || 'Há 4 anos realizando negócios com solidez e honestidade.'}</p>
+              </section>
 
-          {Array.isArray(banners) && banners.length > 0 && (
-            <div className="banners-carousel" ref={bannersRef}>
-              {banners.map(b => (
-                <div key={b.id} className="banner-slide">
-                  <img src={b.url} alt="Banner" />
+              {Array.isArray(banners) && banners.length > 0 && (
+                <div className="banners-carousel" ref={bannersRef}>
+                  {banners.map(b => (
+                    <div key={b.id} className="banner-slide">
+                      <img src={b.url} alt="Banner" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
 
-          <section className="filter-panel-refined">
-            <div className="filter-grid-6">
-              <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-              <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
-              <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
-              <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
-              <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-              <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
-            </div>
-            {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
-              <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
-            )}
-          </section>
+          {mostrarEstoqueCompleto && (
+            <section className="filter-panel-refined" style={{marginTop: '20px'}}>
+              <div className="filter-grid-6">
+                <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+                <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
+                <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
+                <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
+                <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+                <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
+              </div>
+              {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
+                <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
+              )}
+            </section>
+          )}
 
-          <h2 id="estoque" className="sec-title">
-            {mostrarEstoqueCompleto ? "NOSSO ESTOQUE COMPLETO" : "TOP CARS DO NOSSO ESTOQUE"}
+          <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--accent-gold)'}}>
+            {mostrarEstoqueCompleto ? (config?.titulo_estoque || "NOSSO ESTOQUE COMPLETO") : (config?.titulo_top_cars || "TOP CARS DO NOSSO ESTOQUE")}
           </h2>
 
           <div className="car-grid">
@@ -409,7 +423,7 @@ export default function App() {
                     </div>
                   )}
 
-                  <div className="card-divider" />
+                  <div className="card-divider"></div>
                   
                   <div className="car-footer">
                     <div className="price-container">
@@ -426,13 +440,13 @@ export default function App() {
 
           {!mostrarEstoqueCompleto && veiculosFiltrados.length > 5 && (
             <div style={{textAlign: 'center', margin: '40px 0'}}>
-              <button className="btn-estoque-completo" onClick={() => setMostrarEstoqueCompleto(true)}>Veja nosso estoque completo ➔</button>
+              <button className="btn-estoque-completo" onClick={() => { setMostrarEstoqueCompleto(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Veja nosso estoque completo ➔</button>
             </div>
           )}
 
-          {Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
+          {!mostrarEstoqueCompleto && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
-              <h2 className="sec-title">RESPLANDE LIFE</h2>
+              <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>
               <div className="videos-carousel">
                 {videosGaleria.map(vid => (
                   <div key={vid.id} className="video-card-slide">
@@ -447,63 +461,67 @@ export default function App() {
             </section>
           )}
 
-          <section id="depoimentos" className="sec-entregas">
-            <h2 className="sec-title">NOSSOS CLIENTES</h2>
-            <div className="stats-dashboard">
-              <div className="stat-box" style={{width: '100%'}}>
-                <span className="stat-number">+{config?.vendas_contador || 0}</span>
-                <span className="stat-label">veículos vendidos com procedência</span>
-              </div>
-            </div>
-            
-            <div className="entregas-carousel" ref={carouselRef}>
-              {Array.isArray(avaliacoes) && avaliacoes.filter(a => a?.aprovado === true || String(a?.aprovado) === 'true').map(a => (
-                <div key={a.id} className="entrega-card-slide">
-                  {a.foto_url ? (
-                    <img src={a.foto_url} className="entrega-img clickable-img" alt="Cliente" onClick={() => setExpandedImage(a.foto_url)} />
-                  ) : (
-                    <div className="no-photo-cliente">🚗</div>
-                  )}
-                  <div className="entrega-overlay">
-                    <p className="entrega-depoimento">&quot;{a.texto}&quot;</p>
-                    <span className="entrega-cliente">— {a.nome}</span>
-                  </div>
+          {!mostrarEstoqueCompleto && (
+            <section id="depoimentos" className="sec-entregas">
+              <h2 className="sec-title">{config?.titulo_clientes || "NOSSOS CLIENTES"}</h2>
+              <div className="stats-dashboard">
+                <div className="stat-box" style={{width: '100%'}}>
+                  <span className="stat-number">+{config?.vendas_contador || 0}</span>
+                  <span className="stat-label">veículos vendidos com procedência</span>
                 </div>
-              ))}
-            </div>
-            
-            <div style={{textAlign: 'center', marginTop: '20px'}}>
-              <button className="btn-interesse" style={{width: '100%', maxWidth: '300px'}} onClick={() => setShowReviewForm(!showReviewForm)}>
-                {showReviewForm ? 'Cancelar' : 'Deixar minha avaliação'}
-              </button>
-            </div>
-            
-            {showReviewForm && (
-              <form onSubmit={e => enviarAvaliacao(e, false)} className="public-review-form">
-                <input placeholder="Seu Nome" value={pubReview.nome || ''} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
-                <textarea placeholder="Como foi sua experiência?" value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
-                <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
-                <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
-                {loading && uploadProgress > 0 && (
-                  <div className="progress-bar-container">
-                    <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+              </div>
+              
+              <div className="entregas-carousel" ref={carouselRef}>
+                {Array.isArray(avaliacoes) && avaliacoes.filter(a => a?.aprovado === true || String(a?.aprovado) === 'true').map(a => (
+                  <div key={a.id} className="entrega-card-slide">
+                    {a.foto_url ? (
+                      <img src={a.foto_url} className="entrega-img clickable-img" alt="Cliente" onClick={() => setExpandedImage(a.foto_url)} />
+                    ) : (
+                      <div className="no-photo-cliente">🚗</div>
+                    )}
+                    <div className="entrega-overlay">
+                      <p className="entrega-depoimento">&quot;{a.texto}&quot;</p>
+                      <span className="entrega-cliente">— {a.nome}</span>
+                    </div>
                   </div>
-                )}
-                <button type="submit" className="btn-submit-car" disabled={loading}>
-                  {loading ? 'Enviando...' : 'Enviar Avaliação'}
+                ))}
+              </div>
+              
+              <div style={{textAlign: 'center', marginTop: '20px'}}>
+                <button className="btn-interesse" style={{width: '100%', maxWidth: '300px'}} onClick={() => setShowReviewForm(!showReviewForm)}>
+                  {showReviewForm ? 'Cancelar' : 'Deixar minha avaliação'}
                 </button>
-              </form>
-            )}
-          </section>
+              </div>
+              
+              {showReviewForm && (
+                <form onSubmit={e => enviarAvaliacao(e, false)} className="public-review-form">
+                  <input placeholder="Seu Nome" value={pubReview.nome || ''} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
+                  <textarea placeholder="Como foi sua experiência?" value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
+                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
+                  <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
+                  {loading && uploadProgress > 0 && (
+                    <div className="progress-bar-container">
+                      <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
+                    </div>
+                  )}
+                  <button type="submit" className="btn-submit-car" disabled={loading}>
+                    {loading ? 'Enviando...' : 'Enviar Avaliação'}
+                  </button>
+                </form>
+              )}
+            </section>
+          )}
 
-          <section className="motivational-panel">
-            <h3 className="motivational-quotes">&quot;</h3>
-            <p className="motivational-text">{FRASES_MOTIVACIONAIS[fraseAtiva]}</p>
-          </section>
+          {!mostrarEstoqueCompleto && (
+            <section className="motivational-panel">
+              <h3 className="motivational-quotes">&quot;</h3>
+              <p className="motivational-text">{FRASES_MOTIVACIONAIS[fraseAtiva]}</p>
+            </section>
+          )}
 
-          {Array.isArray(listInstitucionais) && listInstitucionais.length > 0 && (
+          {!mostrarEstoqueCompleto && Array.isArray(listInstitucionais) && listInstitucionais.length > 0 && (
             <section id="sobre" className="about-accordion-section">
-              <h2 className="sec-title">CONHEÇA A RESPLANDE</h2>
+              <h2 className="sec-title">{config?.titulo_institucional || "CONHEÇA A RESPLANDE"}</h2>
               <div className="accordion-wrapper">
                 {listInstitucionais.map((item) => (
                   <div key={item.id} className={`accordion-item ${activeAccordion === item.id ? 'open' : ''}`}>
@@ -551,7 +569,7 @@ export default function App() {
     <div className="app-admin">
       <header className="header-main">
         <HeaderLogo />
-        <button className="btn-admin-access" style={{display: 'block'}} onClick={() => setView('public')}>SAIR DO ADMIN</button>
+        <button className="btn-admin-access" style={{display: 'block'}} onClick={() => setView('public')}>Sair do Admin</button>
       </header>
       
       <nav className="admin-nav">
@@ -566,20 +584,38 @@ export default function App() {
       <main className="admin-box">
         {adminTab === 'inicio' && (
           <div>
-            <h3>Página Inicial, Links e Banners</h3>
-            <label>Título Principal</label>
+            <h3>Títulos, Links e Banners</h3>
+            <label>Título: Header do Site</label>
             <input value={config?.hero_title || ''} onChange={e => setConfig({...config, hero_title: e.target.value})} />
             
-            <label>WhatsApp (Ex: 5585996359338 - Apenas números)</label>
+            <label>Subtítulo do Header</label>
+            <input value={config?.hero_subtitle || ''} onChange={e => setConfig({...config, hero_subtitle: e.target.value})} />
+            
+            <label>Título: Top Cars</label>
+            <input value={config?.titulo_top_cars || ''} onChange={e => setConfig({...config, titulo_top_cars: e.target.value})} />
+            
+            <label>Título: Estoque Completo</label>
+            <input value={config?.titulo_estoque || ''} onChange={e => setConfig({...config, titulo_estoque: e.target.value})} />
+            
+            <label>Título: Resplande Life (Vídeos)</label>
+            <input value={config?.titulo_videos || ''} onChange={e => setConfig({...config, titulo_videos: e.target.value})} />
+            
+            <label>Título: Nossos Clientes</label>
+            <input value={config?.titulo_clientes || ''} onChange={e => setConfig({...config, titulo_clientes: e.target.value})} />
+            
+            <label>Título: Institucional</label>
+            <input value={config?.titulo_institucional || ''} onChange={e => setConfig({...config, titulo_institucional: e.target.value})} />
+
+            <label style={{marginTop: '20px'}}>WhatsApp (Ex: 5585996359338)</label>
             <input value={config?.whatsapp || ''} onChange={e => setConfig({...config, whatsapp: e.target.value.replace(/\D/g, '')})} />
             
-            <label>Link do Instagram (Ex: https://instagram.com/resplandeveiculos)</label>
+            <label>Link do Instagram</label>
             <input value={config?.instagram || ''} onChange={e => setConfig({...config, instagram: e.target.value})} />
             
             <label>Estatística "Veículos Vendidos"</label>
             <input type="number" value={config?.vendas_contador || 0} onChange={e => setConfig({...config, vendas_contador: Number(e.target.value)})} />
             
-            <button className="btn-submit-car" onClick={salvarConfig} disabled={loading}>{loading ? 'Salvando...' : 'Salvar Globais'}</button>
+            <button className="btn-submit-car" onClick={salvarConfig} disabled={loading}>{loading ? 'Salvando...' : 'Salvar Textos Globais'}</button>
 
             <h3 style={{marginTop: '40px', borderTop: '1px solid #333', paddingTop: '20px'}}>Adicionar Banners</h3>
             <p style={{fontSize: '12px', color: '#888', marginBottom: '10px'}}>Estes banners ficarão rolando antes da vitrine de carros.</p>

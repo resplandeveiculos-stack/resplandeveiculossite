@@ -287,7 +287,6 @@ export default function App() {
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
   const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
   
-  // FUNÇÃO CORRIGIDA PARA ACEITAR QUALQUER NOME DE CAMPO (FIELD: STRING)
   const handlePrecoChange = (val: string, field: string, formObj: any, setFormObj: any) => { 
     setFormObj({ ...formObj, [field]: formatCurrencyBR(val) }); 
   };
@@ -307,7 +306,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ACESSO AO ADMIN COM SENHA
   const handleAdminAccess = () => {
     const pwd = window.prompt("Digite a senha de acesso restrito:");
     if (pwd === "bmw26volvo") {
@@ -584,9 +582,12 @@ export default function App() {
                 {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
               </div>
 
-              {publicTab === 'home' && veiculosFiltrados.length > 3 && (
+              {/* BOTÃO ESTOQUE COMPLETO - SEMPRE VISÍVEL NA HOME */}
+              {publicTab === 'home' && (
                 <div style={{textAlign: 'center', margin: '50px 0'}}>
-                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>VEJA NOSSO ESTOQUE COMPLETO ➔</button>
+                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                    VEJA NOSSO ESTOQUE COMPLETO ➔
+                  </button>
                 </div>
               )}
             </>

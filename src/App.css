@@ -53,12 +53,10 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .brand-zone { display: flex; align-items: center; gap: 10px; cursor: pointer; pointer-events: auto; }
 .brand-logo-img { height: 35px; width: auto; object-fit: contain; }
 
-/* REMOVIDO O SCALEX QUE CAUSAVA SOBREPOSIÇÃO E AJUSTADO O TAMANHO PARA CELULAR */
 .brand-text-container { display: flex; align-items: center; }
 .brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 13px; font-weight: 400; color: var(--text-primary); margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; white-space: nowrap; }
 .brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: var(--accent-gold); margin-left: 4px; text-transform: uppercase; }
 
-/* AÇÕES DO HEADER (BOTÕES) ALINHADOS COM GAP */
 .header-actions { position: relative; z-index: 999999; display: flex; align-items: center; gap: 10px; }
 .theme-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; outline: none; transition: transform 0.3s; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
 .theme-toggle-btn:hover { transform: scale(1.1); }
@@ -66,7 +64,7 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 
 .desktop-top-nav { display: none; }
 
-/* MENU DROPDOWN MOBILE CORRIGIDO */
+/* MENU DROPDOWN MOBILE */
 .mobile-dropdown-menu { position: fixed; top: 80px; right: 20px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; z-index: 99999; display: flex; flex-direction: column; padding: 10px 0; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;}
 .mobile-dropdown-menu a { color: var(--text-primary); text-decoration: none; padding: 15px 25px; font-size: 13px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-color); display: block; text-align: center; }
 .mobile-dropdown-menu a:last-child { border-bottom: none; }
@@ -76,19 +74,19 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .btn-admin-access { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; pointer-events: auto; white-space: nowrap;}
 .btn-admin-access:hover { background: var(--danger); border-color: var(--danger); color: white; }
 
-/* ================= LAYOUT E BANNER (RETANGULAR) ================= */
+/* ================= LAYOUT E BANNER ================= */
 .content-main { padding: 100px 20px 40px; max-width: 1200px; margin: 0 auto; width: 100%; min-height: 80vh;}
 .hero-section { text-align: center; padding: 25px 0 35px; }
 .hero-section h2 { font-size: 28px; line-height: 1.2; margin-bottom: 10px; color: var(--text-primary); font-weight: 700; text-transform: uppercase;}
 .hero-subtitle { font-size: 13px; color: var(--accent-gold); font-weight: 600; text-align: center; }
 
-/* BANNER RETANGULAR WIDESCREEN */
+/* BANNER RETANGULAR NO CELULAR FICA COM 200PX DE ALTURA */
 .banners-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-bottom: 50px; border-radius: 12px; height: 200px; background: var(--bg-deep);}
 .banners-carousel::-webkit-scrollbar { display: none; }
 .banner-slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 .banner-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* ================= FILTROS E VOLTAR ================= */
+/* ================= FILTROS ================= */
 .filter-panel-refined { margin-bottom: 45px; background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px var(--shadow-glow); }
 .filter-grid-6 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 5px; }
 .filter-group label { font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
@@ -99,16 +97,21 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 /* ================= CARDS DOS VEÍCULOS ================= */
 .car-grid { display: flex; flex-direction: column; gap: 40px; margin-bottom: 30px; }
 
-/* FLEXBOX PARA ANCORAR O BOTÃO AO FUNDO DO CARTÃO */
 .car-card { background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; height: 100%; box-shadow: 0 10px 30px var(--shadow-glow); }
 .car-details { display: flex; flex-direction: column; flex-grow: 1; padding: 25px; }
 
+/* ESTOQUE NORMAL */
 .car-media-slider { height: 260px; background: var(--bg-deep); position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
 .car-model-title { font-size: 26px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; margin: 0; line-height: 1.1; }
 
-.car-card.card-compact .car-media-slider { height: 160px; }
-.car-card.card-compact .car-model-title { font-size: 20px; }
-.car-card.card-compact .car-details { padding: 15px; }
+/* REDUÇÃO DRÁSTICA PARA A HOME (CARD COMPACT) PARA FICAR MENOR QUE O BANNER */
+.car-card.card-compact .car-media-slider { height: 140px; }
+.car-card.card-compact .car-model-title { font-size: 16px; }
+.car-card.card-compact .car-details { padding: 12px 15px; }
+.car-card.card-compact .car-price { font-size: 18px; }
+.car-card.card-compact .car-meta { font-size: 11px; margin-bottom: 10px; gap: 5px; }
+.car-card.card-compact .car-tag { font-size: 9px; padding: 3px 8px; }
+.car-card.card-compact .btn-interesse { padding: 8px 14px; font-size: 11px; }
 
 .media-scroller { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; width: 100%; height: 100%; }
 .media-scroller::-webkit-scrollbar { display: none; }
@@ -119,7 +122,6 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 
 .swipe-hint { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; pointer-events: none; backdrop-filter: blur(4px); }
 
-/* BADGE BLINDADO NA ESQUERDA E AMARELO */
 .badge-blindado { position: absolute; top: 12px; left: 12px; background: #facc15; color: #000; font-size: 10px; font-weight: 900; text-transform: uppercase; padding: 6px 14px; border-radius: 4px; z-index: 10; letter-spacing: 0.5px; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
 
 .car-header-center { text-align: left; margin-bottom: 15px; }
@@ -132,7 +134,7 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .car-tag { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(150,150,150,0.2); }
 .tag-verde { background-color: rgba(37, 211, 102, 0.05); color: #25D366; border-color: rgba(37, 211, 102, 0.3); }
 
-/* MARGIN-TOP: AUTO É O QUE EMPURRA O PREÇO E O BOTÃO PARA O FUNDO DO CARD */
+/* MARGIN-TOP AUTO GARANTE ALINHAMENTO DO PREÇO NO FUNDO MESMO QUE O TEXTO SEJA LONGO */
 .card-divider { margin-top: auto; height: 1px; background-color: var(--border-color); margin-bottom: 15px; width: 100%; }
 
 .car-footer { display: flex; justify-content: space-between; align-items: center; }
@@ -257,6 +259,9 @@ input:focus, textarea:focus, .select-sleek:focus { border-color: var(--accent-go
 .checkbox-row { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-input); border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); cursor: pointer; }
 .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent-gold); }
 .checkbox-row label { margin: 0; font-size: 13px; color: var(--text-primary); cursor: pointer; font-weight: 400; text-transform: none; letter-spacing: 0;}
+
+.btn-submit-car { background: var(--accent-gold); color: var(--bg-pure); border: none; padding: 16px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; font-family: inherit; text-transform: uppercase; letter-spacing: 1px; }
+.btn-submit-car:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ================= COMPORTAMENTO PARA COMPUTADOR (DESKTOP) ================= */
 @media (min-width: 768px) {

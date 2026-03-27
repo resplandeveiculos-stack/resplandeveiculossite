@@ -74,7 +74,8 @@ export default function App() {
   const [pubReviewFile, setPubReviewFile] = useState<File | null>(null);
 
   const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender' | 'avaliacoes'>('home');
-  const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', km: '' });
+  // ADICIONADOS OS NOVOS CAMPOS AQUI
+  const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', cor: '', combustivel: 'Gasolina', km: '', valor: '' });
 
   const [fraseAtiva, setFraseAtiva] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -184,9 +185,17 @@ export default function App() {
     combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: []
   });
 
-  const prepararEdicaoVeiculo = (v: Veiculo) => { setForm({ ...v }); setEditingId(v.id || null); setAdminTab('novo_veiculo'); setArquivos([]); };
+  const prepararEdicaoVeiculo = (v: Veiculo) => { 
+    setForm({ ...v }); setEditingId(v.id || null); setAdminTab('novo_veiculo'); setArquivos([]); 
+  };
+
   const cancelarEdicaoVeiculo = () => {
-    setForm({ marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] });
+    setForm({ 
+      marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', 
+      status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, 
+      ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, 
+      combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] 
+    });
     setEditingId(null); setArquivos([]);
   };
 
@@ -204,20 +213,23 @@ export default function App() {
         setUploadProgress(Math.round(((i + 1) / arquivos.length) * 100));
       }
     }
+    
     const payload = { ...form, galeria: novaGaleria }; delete payload.id; 
     
     if (editingId) { 
       const { error } = await supabase.from('veiculos').update(payload).eq('id', editingId); 
-      if (error) alert(error.message); else { alert("Atualizado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+      if (error) alert("Erro ao atualizar o banco de dados. Motivo: " + error.message);
+      else { alert("Veículo atualizado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
     } else { 
       const { error } = await supabase.from('veiculos').insert([payload]); 
-      if (error) alert(error.message); else { alert("Publicado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+      if (error) alert("Erro ao publicar! O banco recusou. Motivo: " + error.message);
+      else { alert("Veículo publicado com sucesso!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
     }
     setLoading(false); setUploadProgress(0);
   };
 
   const atualizarStatusVeiculo = async (id: number, novoStatus: string) => { await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id); fetchVeiculos(); };
-  const deletarVeiculo = async (id: number) => { if (window.confirm("Excluir?")) { await supabase.from('veiculos').delete().eq('id', id); fetchVeiculos(); } };
+  const deletarVeiculo = async (id: number) => { if (window.confirm("Excluir este veículo?")) { await supabase.from('veiculos').delete().eq('id', id); fetchVeiculos(); } };
   const togglePromocao = async (id: number, statusAtual: boolean) => { await supabase.from('veiculos').update({ em_promocao: !statusAtual }).eq('id', id); fetchVeiculos(); };
 
   const [vidForm, setVidForm] = useState({ file: null as File | null, titulo: '', descricao: '', existingUrl: '' });
@@ -228,7 +240,7 @@ export default function App() {
 
   const salvarVideoGaleria = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vidForm.file && !editingVideoId) { alert("Selecione vídeo!"); return; }
+    if (!vidForm.file && !editingVideoId) { alert("Selecione um arquivo de vídeo!"); return; }
     setLoading(true); setUploadProgress(editingVideoId && !vidForm.file ? 50 : 20);
     
     let url = vidForm.existingUrl;
@@ -240,18 +252,25 @@ export default function App() {
     
     const payload = { url, titulo: vidForm.titulo, descricao: vidForm.descricao };
     if (editingVideoId) { 
-      await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); 
+      const {error} = await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); 
+      if(error) alert(error.message); else { alert("Atualizado!"); cancelarEdicaoVideo(); fetchVideos(); }
     } else { 
-      await supabase.from('galeria_videos').insert([payload]); 
+      const {error} = await supabase.from('galeria_videos').insert([payload]); 
+      if(error) alert(error.message); else { alert("Adicionado!"); cancelarEdicaoVideo(); fetchVideos(); }
     }
-    cancelarEdicaoVideo(); fetchVideos(); setLoading(false); setUploadProgress(0);
+    setLoading(false); setUploadProgress(0);
   };
-  const deletarVideo = async (id: number) => { if(window.confirm("Apagar?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
+  const deletarVideo = async (id: number) => { if(window.confirm("Apagar vídeo?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
 
   const adicionarBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]; if(!file) return; setLoading(true);
+    const file = e.target.files?.[0];
+    if(!file) return;
+    setLoading(true);
     const url = await uploadMidiaSingle(file);
-    if(url) { await supabase.from('banners').insert([{ url }]); fetchBanners(); }
+    if(url) { 
+      const {error} = await supabase.from('banners').insert([{ url }]); 
+      if(error) alert(error.message); else { fetchBanners(); alert("Banner adicionado!"); } 
+    }
     setLoading(false);
   }
   const deletarBanner = async (id: number) => { if(window.confirm("Apagar Banner?")) { await supabase.from('banners').delete().eq('id', id); fetchBanners(); } }
@@ -267,20 +286,33 @@ export default function App() {
   };
   
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
-  const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
-  const handlePrecoChange = (val: string, field: 'preco' | 'preco_antigo') => { setForm({ ...form, [field]: formatCurrencyBR(val) }); };
+  const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
+  const handlePrecoChange = (val: string, field: 'preco' | 'preco_antigo', formObj: any, setFormObj: any) => { setFormObj({ ...formObj, [field]: formatCurrencyBR(val) }); };
   
   const salvarConfig = async () => { 
     setLoading(true); 
     const { id, updated_at, brand_name, brand_sub, endereco, historia, ...configToSave } = config; 
-    await supabase.from('site_config').update(configToSave).eq('id', 1); 
-    alert("Alterações salvas!"); fetchConfig(); setLoading(false); 
+    const { error } = await supabase.from('site_config').update(configToSave).eq('id', 1); 
+    if (error) alert("Erro ao salvar textos: " + error.message); else alert("Alterações salvas!"); 
+    fetchConfig(); 
+    setLoading(false); 
   };
 
   const handleLogoClick = () => {
     setView('public');
     setPublicTab('home');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // ACESSO AO ADMIN COM SENHA
+  const handleAdminAccess = () => {
+    const pwd = window.prompt("Digite a senha de acesso restrito:");
+    if (pwd === "bmw26volvo") {
+      setView('admin');
+      window.scrollTo(0,0);
+    } else if (pwd !== null) {
+      alert("Senha incorreta.");
+    }
   };
 
   const nextImage = (e: React.MouseEvent) => {
@@ -298,10 +330,12 @@ export default function App() {
   };
 
   const HeaderLogo = () => (
-    <div className="brand-zone" onClick={handleLogoClick}>
+    <div className="brand-zone" onClick={handleLogoClick} style={{cursor: 'pointer', pointerEvents: 'auto'}}>
       <img src="https://i.imgur.com/eczLsJ5.png" alt="Logo Resplande" className="brand-logo-img" />
       <div className="brand-text-container">
-        <h1 className="brand-name">RESPLANDE<span className="brand-sub">VEÍCULOS</span></h1>
+        <h1 className="brand-name">
+          RESPLANDE<span className="brand-sub">VEÍCULOS</span>
+        </h1>
       </div>
     </div>
   );
@@ -367,23 +401,48 @@ export default function App() {
               
               <form onSubmit={(e) => {
                 e.preventDefault();
-                const msg = encodeURIComponent(`Olá! Tenho interesse em vender meu veículo.\n\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nKM: ${formVender.km}`);
+                const msg = encodeURIComponent(`Olá! Tenho interesse em vender meu veículo.\n\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nCor: ${formVender.cor}\nCombustível: ${formVender.combustivel}\nKM: ${formVender.km}\nValor Pretendido: R$ ${formVender.valor}`);
                 window.open(getWhatsAppLink(msg), '_blank');
               }} className="public-review-form" style={{ textAlign: 'left' }}>
                 
-                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
-                <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                  <div>
+                    <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
+                    <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
+                  </div>
+                  <div>
+                    <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Cor</label>
+                    <input placeholder="Ex: Branco" value={formVender.cor} onChange={e => setFormVender({...formVender, cor: e.target.value})} required />
+                  </div>
+                </div>
                 
-                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '5px', fontWeight: 'bold'}}>Modelo</label>
                 <input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
                 
                 <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
                 <input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
                 
-                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
-                <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px'}}>
+                  <div>
+                    <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Quilometragem</label>
+                    <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
+                  </div>
+                  <div>
+                    <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Combustível</label>
+                    <select value={formVender.combustivel} onChange={e => setFormVender({...formVender, combustivel: e.target.value})} className="select-sleek" required>
+                      <option value="Flex">Flex</option>
+                      <option value="Gasolina">Gasolina</option>
+                      <option value="Diesel">Diesel</option>
+                      <option value="Híbrido">Híbrido</option>
+                      <option value="Elétrico">Elétrico</option>
+                    </select>
+                  </div>
+                </div>
+
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Valor Pretendido (R$)</label>
+                <input placeholder="Ex: 120.000,00" value={formVender.valor} onChange={e => handlePrecoChange(e.target.value, 'valor', formVender, setFormVender)} />
                 
-                <button type="submit" className="btn-avaliar-primary" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
+                <button type="submit" className="btn-avaliar-primary" style={{ marginTop: '25px', maxWidth: '100%' }}>📲 Enviar para o WhatsApp</button>
               </form>
             </section>
           )}
@@ -521,10 +580,16 @@ export default function App() {
                 ))}
                 {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
               </div>
+
+              {publicTab === 'home' && veiculosFiltrados.length > 3 && (
+                <div style={{textAlign: 'center', margin: '50px 0'}}>
+                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>VEJA NOSSO ESTOQUE COMPLETO ➔</button>
+                </div>
+              )}
             </>
           )}
 
-          {/* SESSÕES DA HOME */}
+          {/* AS SESSÕES ABAIXO SÓ APARECEM NA HOME */}
           {publicTab === 'home' && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
               <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>
@@ -591,7 +656,7 @@ export default function App() {
                       <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   )}
-                  <button type="submit" className="btn-avaliar-primary" style={{marginTop: '15px'}} disabled={loading}>
+                  <button type="submit" className="btn-avaliar-primary" style={{marginTop: '15px', maxWidth: '100%'}} disabled={loading}>
                     {loading ? 'Enviando...' : 'Enviar Avaliação'}
                   </button>
                 </form>
@@ -670,10 +735,10 @@ export default function App() {
           </div>
         )}
 
-        {/* FOOTER NOVO COM BOTÃO DE ADMIN ESCONDIDO */}
+        {/* FOOTER OFICIAL COM ACESSO RESTRITO */}
         <footer className="footer-main">
            <p>© {new Date().getFullYear()} Resplande Veículos. Todos os direitos reservados.</p>
-           <button onClick={() => { setView('admin'); window.scrollTo(0,0); }} className="btn-hidden-admin">Acesso Restrito</button>
+           <button onClick={handleAdminAccess} className="btn-hidden-admin">Acesso Restrito</button>
         </footer>
       </div>
     );
@@ -821,11 +886,11 @@ export default function App() {
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '10px'}}>
               <div>
                 <label>Preço Ofertado (R$)</label>
-                <input placeholder="0,00" value={form.preco || ''} onChange={e => handlePrecoChange(e.target.value, 'preco')} required />
+                <input placeholder="0,00" value={form.preco || ''} onChange={e => handlePrecoChange(e.target.value, 'preco', form, setForm)} required />
               </div>
               <div>
                 <label>Preço Antigo - Opcional</label>
-                <input placeholder="0,00" value={form.preco_antigo || ''} onChange={e => handlePrecoChange(e.target.value, 'preco_antigo')} />
+                <input placeholder="0,00" value={form.preco_antigo || ''} onChange={e => handlePrecoChange(e.target.value, 'preco_antigo', form, setForm)} />
               </div>
             </div>
 

@@ -48,29 +48,32 @@ body {
 p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { text-align: justify; }
 
 /* ================= HEADER E NAVEGAÇÃO ================= */
-.header-main { position: fixed; width: 100%; top: 0; left: 0; z-index: 999999; background: var(--header-bg); backdrop-filter: blur(10px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+.header-main { position: fixed; width: 100%; top: 0; left: 0; z-index: 999999; background: var(--header-bg); backdrop-filter: blur(10px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 10px; }
 
-.brand-zone { display: flex; align-items: center; gap: 12px; cursor: pointer; pointer-events: auto; }
-.brand-logo-img { height: 42px; width: auto; object-fit: contain; }
-.brand-text-container { display: flex; align-items: center; transform: scaleX(1.25); transform-origin: left center; }
-.brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 16px; font-weight: 400; color: var(--text-primary); margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; }
-.brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: var(--accent-gold); margin-left: 6px; text-transform: uppercase; }
+.brand-zone { display: flex; align-items: center; gap: 10px; cursor: pointer; pointer-events: auto; }
+.brand-logo-img { height: 35px; width: auto; object-fit: contain; }
 
-.header-actions { position: relative; z-index: 999999; display: flex; align-items: center;}
-.theme-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; margin-right: 15px; outline: none; transition: transform 0.3s; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
+/* REMOVIDO O SCALEX QUE CAUSAVA SOBREPOSIÇÃO E AJUSTADO O TAMANHO PARA CELULAR */
+.brand-text-container { display: flex; align-items: center; }
+.brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 13px; font-weight: 400; color: var(--text-primary); margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; white-space: nowrap; }
+.brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: var(--accent-gold); margin-left: 4px; text-transform: uppercase; }
+
+/* AÇÕES DO HEADER (BOTÕES) ALINHADOS COM GAP */
+.header-actions { position: relative; z-index: 999999; display: flex; align-items: center; gap: 10px; }
+.theme-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; outline: none; transition: transform 0.3s; pointer-events: auto; display: flex; align-items: center; justify-content: center; }
 .theme-toggle-btn:hover { transform: scale(1.1); }
-.menu-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; padding: 10px; margin-right: -10px; display: flex; align-items: center; justify-content: center; outline: none; pointer-events: auto;}
+.menu-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none; pointer-events: auto;}
 
 .desktop-top-nav { display: none; }
 
-/* MENU DROPDOWN MOBILE CORRIGIDO (SEM BORDAS EXTRAS) */
+/* MENU DROPDOWN MOBILE CORRIGIDO */
 .mobile-dropdown-menu { position: fixed; top: 80px; right: 20px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; z-index: 99999; display: flex; flex-direction: column; padding: 10px 0; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;}
 .mobile-dropdown-menu a { color: var(--text-primary); text-decoration: none; padding: 15px 25px; font-size: 13px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-color); display: block; text-align: center; }
 .mobile-dropdown-menu a:last-child { border-bottom: none; }
 .mobile-dropdown-menu a:hover { color: var(--accent-gold); background: var(--hover-bg); }
 
-.menu-admin-btn { display: none; } /* Removido para usar o footer */
-.btn-admin-access { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; pointer-events: auto;}
+.menu-admin-btn { display: none; } 
+.btn-admin-access { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.3s; pointer-events: auto; white-space: nowrap;}
 .btn-admin-access:hover { background: var(--danger); border-color: var(--danger); color: white; }
 
 /* ================= LAYOUT E BANNER (RETANGULAR) ================= */
@@ -95,10 +98,12 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 
 /* ================= CARDS DOS VEÍCULOS ================= */
 .car-grid { display: flex; flex-direction: column; gap: 40px; margin-bottom: 30px; }
-.car-card { background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; box-shadow: 0 10px 30px var(--shadow-glow); }
+
+/* FLEXBOX PARA ANCORAR O BOTÃO AO FUNDO DO CARTÃO */
+.car-card { background: var(--bg-card); border-radius: 16px; overflow: hidden; border: 1px solid var(--border-color); position: relative; display: flex; flex-direction: column; height: 100%; box-shadow: 0 10px 30px var(--shadow-glow); }
+.car-details { display: flex; flex-direction: column; flex-grow: 1; padding: 25px; }
 
 .car-media-slider { height: 260px; background: var(--bg-deep); position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
-.car-details { padding: 25px; }
 .car-model-title { font-size: 26px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; margin: 0; line-height: 1.1; }
 
 .car-card.card-compact .car-media-slider { height: 160px; }
@@ -127,7 +132,8 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .car-tag { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(150,150,150,0.2); }
 .tag-verde { background-color: rgba(37, 211, 102, 0.05); color: #25D366; border-color: rgba(37, 211, 102, 0.3); }
 
-.card-divider { height: 1px; background-color: var(--border-color); margin-bottom: 15px; width: 100%; }
+/* MARGIN-TOP: AUTO É O QUE EMPURRA O PREÇO E O BOTÃO PARA O FUNDO DO CARD */
+.card-divider { margin-top: auto; height: 1px; background-color: var(--border-color); margin-bottom: 15px; width: 100%; }
 
 .car-footer { display: flex; justify-content: space-between; align-items: center; }
 .price-container { display: flex; flex-direction: column; justify-content: center; }
@@ -174,8 +180,7 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .entregas-carousel { display: flex; flex-direction: row; gap: 20px; margin-bottom: 30px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 10px; padding-left: 2px;}
 .entregas-carousel::-webkit-scrollbar { display: none; }
 
-/* CARD MAIS LARGO E RETANGULAR PARA DEPOIMENTOS NA HOME */
-.entrega-card-slide { flex: 0 0 calc(70% - 10px); scroll-snap-align: start; position: relative; height: 300px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-card); display: block; box-shadow: 0 10px 30px var(--shadow-glow);}
+.entrega-card-slide { flex: 0 0 calc(85% - 10px); scroll-snap-align: start; position: relative; height: 280px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-card); display: block; box-shadow: 0 10px 30px var(--shadow-glow);}
 .entrega-img { width: 100%; height: 100%; object-fit: cover; display: block; } 
 
 .entrega-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px 15px 15px; background: linear-gradient(transparent, rgba(0,0,0,0.95) 40%, rgba(0,0,0,1) 100%); backdrop-filter: blur(1px); display: flex; flex-direction: column; gap: 4px; pointer-events: none; }
@@ -184,7 +189,6 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .entrega-data { font-size: 9px; color: #aaaaaa; text-shadow: 1px 1px 2px rgba(0,0,0,1); }
 .no-photo-cliente { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #080808; font-size: 40px; }
 
-/* BOTÕES DE AVALIAÇÃO CORRIGIDOS */
 .avaliacoes-actions { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; margin-top: 30px; }
 
 .btn-avaliar-primary { background: var(--text-primary); color: var(--bg-pure); border: none; padding: 16px 30px; border-radius: 8px; font-size: 15px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%; max-width: 320px; box-shadow: 0 4px 15px var(--shadow-glow); font-family: inherit; letter-spacing: 0.5px;}
@@ -193,7 +197,6 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .btn-avaliar-secondary { background: transparent; color: var(--text-secondary); border: none; padding: 10px; font-size: 13px; font-weight: 600; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; text-decoration: underline; font-family: inherit;}
 .btn-avaliar-secondary:hover { color: var(--text-primary); }
 
-/* TELA DE TODAS AS AVALIAÇÕES */
 .avaliacoes-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 40px; }
 .avaliacao-card-full { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px var(--shadow-glow); }
 .avaliacao-perfil { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
@@ -228,7 +231,7 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .accordion-item.open .accordion-content { max-height: 300px; }
 .accordion-content p { padding: 0 20px 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0; }
 
-/* ================= RODAPÉ (FOOTER) ================= */
+/* ================= RODAPÉ (FOOTER) COM ACESSO RESTRITO ================= */
 .footer-main { text-align: center; padding: 20px; font-size: 11px; color: var(--text-secondary); border-top: 1px solid var(--border-color); background: var(--bg-card); margin-top: 40px;}
 .btn-hidden-admin { background: transparent; border: none; color: var(--text-secondary); font-size: 11px; cursor: pointer; text-decoration: underline; margin-top: 10px; transition: 0.3s;}
 .btn-hidden-admin:hover { color: var(--text-primary); }
@@ -255,30 +258,22 @@ input:focus, textarea:focus, .select-sleek:focus { border-color: var(--accent-go
 .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--accent-gold); }
 .checkbox-row label { margin: 0; font-size: 13px; color: var(--text-primary); cursor: pointer; font-weight: 400; text-transform: none; letter-spacing: 0;}
 
-.btn-submit-car { background: var(--accent-gold); color: var(--bg-pure); border: none; padding: 16px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; font-family: inherit; text-transform: uppercase; letter-spacing: 1px; }
-.btn-submit-car:disabled { opacity: 0.6; cursor: not-allowed; }
-
 /* ================= COMPORTAMENTO PARA COMPUTADOR (DESKTOP) ================= */
 @media (min-width: 768px) {
+  .brand-name { font-size: 18px; }
+  
   .desktop-top-nav { display: flex; gap: 20px; }
   .desktop-top-nav a { color: var(--text-primary); text-decoration: none; font-size: 13px; font-weight: 600; text-transform: uppercase; transition: 0.3s; letter-spacing: 0.5px;}
   .desktop-top-nav a:hover { color: var(--accent-gold); }
   
   .menu-toggle-btn { display: none !important; }
   
-  /* BANNERS AINDA MAIORES NO PC */
   .banners-carousel { height: 350px; }
   
-  /* GRID DE CARROS DO COMPUTADOR */
-  .car-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
-  
-  /* GRID DE AVALIAÇÕES NO COMPUTADOR */
+  .car-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; align-items: stretch;}
   .avaliacoes-grid { grid-template-columns: repeat(2, 1fr); }
-  
-  /* GRID DE FILTROS DO COMPUTADOR */
   .filter-grid-6 { grid-template-columns: repeat(6, 1fr); }
   
-  /* CARROSSEL ADAPTADO PRO COMPUTADOR */
   .videos-carousel, .entregas-carousel { gap: 30px; }
   .video-card-slide, .entrega-card-slide { flex: 0 0 calc(33.333% - 20px); }
   .entrega-card-slide { height: 350px; } 

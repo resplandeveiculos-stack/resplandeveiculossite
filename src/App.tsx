@@ -532,7 +532,7 @@ export default function App() {
                         <div className="car-tags-container-left">
                           {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
                           {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões na concessionária</span>}
-                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Cautelar</span>}
+                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar Aprovado</span>}
                           {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA pago</span>}
                         </div>
                       )}

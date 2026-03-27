@@ -74,7 +74,6 @@ export default function App() {
   const [pubReviewFile, setPubReviewFile] = useState<File | null>(null);
 
   const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender' | 'avaliacoes'>('home');
-  // ADICIONADOS OS NOVOS CAMPOS AQUI
   const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', cor: '', combustivel: 'Gasolina', km: '', valor: '' });
 
   const [fraseAtiva, setFraseAtiva] = useState(0);
@@ -287,7 +286,11 @@ export default function App() {
   
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
   const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
-  const handlePrecoChange = (val: string, field: 'preco' | 'preco_antigo', formObj: any, setFormObj: any) => { setFormObj({ ...formObj, [field]: formatCurrencyBR(val) }); };
+  
+  // FUNÇÃO CORRIGIDA PARA ACEITAR QUALQUER NOME DE CAMPO (FIELD: STRING)
+  const handlePrecoChange = (val: string, field: string, formObj: any, setFormObj: any) => { 
+    setFormObj({ ...formObj, [field]: formatCurrencyBR(val) }); 
+  };
   
   const salvarConfig = async () => { 
     setLoading(true); 

@@ -180,10 +180,11 @@ export default function App() {
     window.open(getWhatsAppLink(msg), '_blank');
   };
 
+  // BOTÃO DE COMPARTILHAR CORRIGIDO PARA O LINK UNIVERSAL DO WHATSAPP
   const handleShare = (v: Veiculo) => {
     const url = `${window.location.origin}?carro=${v.id}`;
-    const msg = encodeURIComponent(`Olha esse veículo na Resplande Veículos!\n\n• ${v.marca} ${v.modelo}\n• Ano: ${v.fabricacao}\n• R$ ${v.preco}\n\nVeja mais fotos e detalhes clicando no link abaixo:\n${url}`);
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
+    const msg = encodeURIComponent(`Olha esse veículo na Resplande Veículos!\n\n• *${v.marca} ${v.modelo}*\n• Ano: ${v.fabricacao}\n• *R$ ${v.preco}*\n\nVeja as fotos e todos os detalhes clicando no link abaixo:\n${url}`);
+    window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
   };
 
   async function uploadMidiaSingle(file: File) {
@@ -463,7 +464,7 @@ export default function App() {
             </>
           )}
 
-          {/* ================= TELA: ESTOQUE (FILTROS) ================= */}
+          {/* ================= TELA: ESTOQUE (FILTROS DE VOLTA E COMPLETOS) ================= */}
           {publicTab === 'estoque' && (
             <section className="filter-panel-refined" style={{marginTop: '10px'}}>
               <div className="filter-grid-6">
@@ -511,6 +512,7 @@ export default function App() {
                   <div key={v.id} id={`carro-${v.id}`} className={`car-card ${publicTab === 'home' ? 'card-compact' : ''}`}>
                     <div className="car-media-slider">
                       {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
+                      {/* SELO DE VÍDEO SE HOUVER VÍDEO */}
                       {v.galeria?.some(m => m.tipo === 'video') && <div className="badge-video">▶ VÍDEO</div>}
                       
                       <div className="media-scroller">
@@ -621,6 +623,7 @@ export default function App() {
                 )}
               </section>
 
+              {/* CARROSSEL DE FRASES MOTIVACIONAIS QUE ARRASTA PRO LADO */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
                 <div className="motivational-carousel">
@@ -644,6 +647,7 @@ export default function App() {
                           <span className="accordion-icon">{activeAccordion === item.id ? '−' : '+'}</span>
                         </div>
                         <div className="accordion-content">
+                          {/* SISTEMA QUE TRANSFORMA TEXTO EM TÓPICOS ALINHADOS À ESQUERDA SE TIVER QUEBRA DE LINHA */}
                           <ul style={{ padding: '25px 20px', listStyleType: 'none', margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
                             {item.texto.split('\n').map((linha: string, i: number) => linha.trim() ? (
                               <li key={i} style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', display: 'flex', gap: '8px', textAlign: 'left' }}>

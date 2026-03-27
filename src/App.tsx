@@ -18,12 +18,9 @@ const TODAS_AS_MARCAS = ['Audi', 'BMW', 'BYD', 'Caoa Chery', 'Chevrolet', 'Citro
 const ANOS_OPCOES = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012', '2011', '2010'];
 const TIPOS_CARRO = ['Hatch', 'Sedan', 'SUV', 'Picape', 'Crossover', 'Minivan', 'Esportivo', 'Van', 'Perua'].sort();
 
-const FRASES_MOTIVACIONAIS = [
+const FRASES_MOTIVACIONAIS_FALLBACK = [
   "Acelere em direção aos seus sonhos. Seu novo carro está aqui.",
-  "O sucesso é a soma de pequenos esforços. A recompensa é o conforto da sua família.",
-  "Não espere a oportunidade perfeita, crie-a hoje na Resplande Veículos.",
-  "Excelência não é um ato, mas um hábito que entregamos em cada chave.",
-  "Mais que um veículo, entregamos segurança e confiança para o seu caminho."
+  "O sucesso é a soma de pequenos esforços. A recompensa é o conforto da sua família."
 ];
 
 const formatCurrencyBR = (value: any) => {
@@ -42,6 +39,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0); 
   
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([]);
   const [videosGaleria, setVideosGaleria] = useState<VideoGaleria[]>([]);
@@ -82,6 +81,10 @@ export default function App() {
   const carouselRef = useRef<any>(null);
   const bannersRef = useRef<any>(null);
 
+  useEffect(() => {
+    document.body.className = view === 'admin' ? 'theme-dark' : `theme-${theme}`;
+  }, [theme, view]);
+
   useEffect(() => { 
     fetchConfig(); fetchVeiculos(); fetchAvaliacoes(); fetchVideos(); fetchBanners(); 
   }, []);
@@ -100,7 +103,7 @@ export default function App() {
       if (bannersRef.current) scrollCarousel(bannersRef.current, bannersRef.current.clientWidth);
     }, 4000);
 
-    const intervalFrases = setInterval(() => setFraseAtiva((prev) => (prev + 1) % FRASES_MOTIVACIONAIS.length), 5000);
+    const intervalFrases = setInterval(() => setFraseAtiva((prev) => prev + 1), 5000);
 
     return () => { clearInterval(intervalCarousels); clearInterval(intervalFrases); }
   }, [view, publicTab]);
@@ -139,6 +142,9 @@ export default function App() {
   });
 
   const veiculosExibidos = publicTab === 'estoque' ? veiculosFiltrados : veiculosFiltrados.slice(0, 3);
+
+  const frasesDoBanco = [config?.frase_1, config?.frase_2, config?.frase_3, config?.frase_4, config?.frase_5].filter(Boolean);
+  const frasesAtivasCarousel = frasesDoBanco.length > 0 ? frasesDoBanco : FRASES_MOTIVACIONAIS_FALLBACK;
 
   const getWhatsAppLink = (msg?: string) => {
     const rawNumber = String(config?.whatsapp || '5585996359338');
@@ -307,20 +313,28 @@ export default function App() {
   // ================= VIEW PÚBLICA =================
   if (view === 'public') {
     return (
-      <div className="app-public">
+      <div className={`app-public theme-${theme}`}>
         <header className="header-main">
           <HeaderLogo />
           
           <nav className="desktop-top-nav">
-            <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo(0,0); }}>Estoque</a>
-            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
+            <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Estoque</a>
+            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender Veículo</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
             <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
             <a href="#sobre" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
           </nav>
 
           <div className="header-actions">
+            <button className="theme-toggle-btn" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Mudar tema">
+              {theme === 'dark' ? (
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41.39.39 1.03.39 1.41 0l1.06-1.06z"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+              )}
+            </button>
+
             <button className="menu-toggle-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               <svg viewBox="0 0 24 24" width="35" height="35" fill="currentColor">
                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
@@ -345,35 +359,33 @@ export default function App() {
 
           {/* ================= TELA: VENDER VEÍCULO ================= */}
           {publicTab === 'vender' && (
-            <>
-              <section className="filter-panel-refined" style={{marginTop: '10px', textAlign: 'center'}}>
-                <h2 className="sec-title" style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>Venda seu Veículo</h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '25px' }}>
-                  Preencha os dados do seu carro e fale direto com a nossa equipe pelo WhatsApp!
-                </p>
+            <section className="filter-panel-refined" style={{marginTop: '10px', textAlign: 'center'}}>
+              <h2 className="sec-title" style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>Venda seu Veículo</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '25px' }}>
+                Preencha os dados do seu carro e fale direto com a nossa equipe pelo WhatsApp!
+              </p>
+              
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const msg = encodeURIComponent(`Olá! Tenho interesse em vender meu veículo.\n\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nKM: ${formVender.km}`);
+                window.open(getWhatsAppLink(msg), '_blank');
+              }} className="public-review-form" style={{ textAlign: 'left' }}>
                 
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const msg = encodeURIComponent(`Olá! Tenho interesse em vender meu veículo.\n\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nKM: ${formVender.km}`);
-                  window.open(getWhatsAppLink(msg), '_blank');
-                }} className="public-review-form" style={{ textAlign: 'left' }}>
-                  
-                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
-                  <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
-                  
-                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
-                  <input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
-                  
-                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
-                  <input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
-                  
-                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
-                  <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
-                  
-                  <button type="submit" className="btn-submit-car" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
-                </form>
-              </section>
-            </>
+                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
+                <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
+                
+                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
+                <input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
+                
+                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
+                <input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
+                
+                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
+                <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
+                
+                <button type="submit" className="btn-submit-car" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
+              </form>
+            </section>
           )}
 
           {/* ================= TELA: ESTOQUE COMPLETO ================= */}
@@ -421,7 +433,7 @@ export default function App() {
 
               <div className="car-grid">
                 {veiculosExibidos.map(v => (
-                  <div key={v.id} className="car-card">
+                  <div key={v.id} className={`car-card ${publicTab === 'home' ? 'card-compact' : ''}`}>
                     <div className="car-media-slider">
                       {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
                       
@@ -458,9 +470,9 @@ export default function App() {
                       {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria) && (
                         <div className="car-tags-container-left">
                           {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
-                          {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões Concessionária</span>}
-                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar</span>}
-                          {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA Pago</span>}
+                          {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões</span>}
+                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Cautelar</span>}
+                          {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA</span>}
                         </div>
                       )}
 
@@ -468,7 +480,7 @@ export default function App() {
                       
                       <div className="car-footer">
                         <div className="price-container">
-                          {v.em_promocao && v.preco_antigo && <span className="car-price-old">De R$ {v.preco_antigo} por</span>}
+                          {v.em_promocao && v.preco_antigo && <span className="car-price-old">De R$ {v.preco_antigo}</span>}
                           <span className="car-price">R$ {v.preco}</span>
                         </div>
                         <button className="btn-interesse" onClick={() => handleInteresse(v)}>Interesse</button>
@@ -476,12 +488,12 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-                {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: '#666', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
+                {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
               </div>
 
-              {publicTab === 'home' && veiculosFiltrados.length > 3 && (
-                <div style={{textAlign: 'center', margin: '40px 0'}}>
-                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Veja nosso estoque completo ➔</button>
+              {publicTab === 'home' && (
+                <div style={{textAlign: 'center', margin: '50px 0'}}>
+                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>VEJA NOSSO ESTOQUE COMPLETO ➔</button>
                 </div>
               )}
             </>
@@ -541,7 +553,7 @@ export default function App() {
                 <form onSubmit={e => enviarAvaliacao(e, false)} className="public-review-form">
                   <input placeholder="Seu Nome" value={pubReview.nome || ''} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
                   <textarea placeholder="Como foi sua experiência?" value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
-                  <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
+                  <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
                   <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
                   {loading && uploadProgress > 0 && (
                     <div className="progress-bar-container">
@@ -559,7 +571,9 @@ export default function App() {
           {publicTab === 'home' && (
             <section className="motivational-panel">
               <h3 className="motivational-quotes">&quot;</h3>
-              <p className="motivational-text">{FRASES_MOTIVACIONAIS[fraseAtiva]}</p>
+              <p className="motivational-text">
+                {frasesAtivasCarousel[fraseAtiva % frasesAtivasCarousel.length]}
+              </p>
             </section>
           )}
 
@@ -664,10 +678,17 @@ export default function App() {
             <label>Estatística "Veículos Vendidos"</label>
             <input type="number" value={config?.vendas_contador || 0} onChange={e => setConfig({...config, vendas_contador: Number(e.target.value)})} />
             
+            <h3 style={{marginTop: '40px', borderTop: '1px solid var(--border-color)', paddingTop: '20px'}}>Frases Motivacionais (Home)</h3>
+            {[1,2,3,4,5].map(num => (
+              <div key={`frase_${num}`} style={{marginBottom: '10px'}}>
+                <input placeholder={`Frase ${num}`} value={config[`frase_${num}`] || ''} onChange={e => setConfig({...config, [`frase_${num}`]: e.target.value})} />
+              </div>
+            ))}
+
             <button className="btn-submit-car" onClick={salvarConfig} disabled={loading}>{loading ? 'Salvando...' : 'Salvar Textos Globais'}</button>
 
-            <h3 style={{marginTop: '40px', borderTop: '1px solid #333', paddingTop: '20px'}}>Adicionar Banners</h3>
-            <p style={{fontSize: '12px', color: '#888', marginBottom: '10px'}}>Estes banners ficarão rolando antes da vitrine de carros.</p>
+            <h3 style={{marginTop: '40px', borderTop: '1px solid var(--border-color)', paddingTop: '20px'}}>Adicionar Banners</h3>
+            <p style={{fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '10px'}}>Estes banners ficarão rolando antes da vitrine de carros.</p>
             <input type="file" accept="image/*" onChange={adicionarBanner} />
             {loading && <div style={{color: 'var(--accent-gold)'}}>Enviando banner...</div>}
             
@@ -675,7 +696,7 @@ export default function App() {
               {Array.isArray(banners) && banners.map(b => (
                 <div key={b.id} style={{position: 'relative', width: '150px', flexShrink: 0}}>
                   <img src={b.url} style={{width: '100%', borderRadius: '8px'}} />
-                  <button onClick={() => deletarBanner(b.id)} style={{position: 'absolute', top: 5, right: 5, background: '#ff4d4d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>X</button>
+                  <button onClick={() => deletarBanner(b.id)} style={{position: 'absolute', top: 5, right: 5, background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer'}}>X</button>
                 </div>
               ))}
             </div>
@@ -686,7 +707,7 @@ export default function App() {
           <form onSubmit={salvarVeiculo}>
             <h3 style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
               {editingId ? '✏️ Editando Veículo' : 'Cadastrar Veículo'}
-              {editingId && <button type="button" onClick={cancelarEdicaoVeiculo} style={{background: 'transparent', color: '#ff4d4d', border: 'none', cursor: 'pointer', fontSize: '12px'}}>Cancelar</button>}
+              {editingId && <button type="button" onClick={cancelarEdicaoVeiculo} style={{background: 'transparent', color: 'var(--danger)', border: 'none', cursor: 'pointer', fontSize: '12px'}}>Cancelar</button>}
             </h3>
             
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
@@ -751,8 +772,8 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{background: '#111', padding: '15px', borderRadius: '8px', border: '1px solid #262626', margin: '20px 0'}}>
-              <label style={{color: '#cfa44c', marginBottom: '10px'}}>Diferenciais e Tags</label>
+            <div style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)', margin: '20px 0'}}>
+              <label style={{color: 'var(--accent-gold)', marginBottom: '10px'}}>Diferenciais e Tags</label>
               
               <div className="checkbox-row">
                 <input type="checkbox" checked={form.unico_dono || false} onChange={e => setForm({...form, unico_dono: e.target.checked})} />
@@ -774,14 +795,14 @@ export default function App() {
                 <label>IPVA Pago</label>
               </div>
               
-              <div className="checkbox-row" style={{marginBottom: 0, marginTop: '10px', borderTop: '1px solid #333', paddingTop: '10px'}}>
+              <div className="checkbox-row" style={{marginBottom: 0, marginTop: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '10px'}}>
                 <input type="checkbox" checked={form.blindado || false} onChange={e => setForm({...form, blindado: e.target.checked})} />
                 <label>Blindado (Aparece na Foto)</label>
               </div>
             </div>
             
-            <label style={{color: '#cfa44c', fontWeight: 'bold'}}>Mídia (Fotos e Vídeos)</label>
-            {editingId && <p style={{fontSize: '11px', color: '#888', marginBottom: '5px'}}>Vazio mantém as originais.</p>}
+            <label style={{color: 'var(--accent-gold)', fontWeight: 'bold'}}>Mídia (Fotos e Vídeos)</label>
+            {editingId && <p style={{fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '5px'}}>Vazio mantém as originais.</p>}
             
             <input type="file" multiple accept="image/*,video/*" onChange={e => setArquivos(Array.from(e.target.files || []))} />
             
@@ -802,7 +823,7 @@ export default function App() {
             <h3>Gerenciar Estoque</h3>
             <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
               {Array.isArray(veiculos) && veiculos.map(v => (
-                <div key={v.id} style={{background: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #333', display: 'flex', alignItems: 'center', gap: '15px'}}>
+                <div key={v.id} style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '15px'}}>
                    {Array.isArray(v.galeria) && v.galeria[0] ? (
                      <div style={{width: '60px', height: '60px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0}}>
                        {v.galeria[0].tipo === 'foto' ? (
@@ -816,23 +837,23 @@ export default function App() {
                    )}
                    
                    <div style={{flex: 1}}>
-                     <strong style={{color: 'white', display: 'block', fontSize: '14px', textTransform: 'uppercase'}}>{v.marca} {v.modelo}</strong>
-                     <span style={{fontSize: '12px', color: '#a0a0a0'}}>R$ {v.preco}</span>
+                     <strong style={{color: 'var(--text-primary)', display: 'block', fontSize: '14px', textTransform: 'uppercase'}}>{v.marca} {v.modelo}</strong>
+                     <span style={{fontSize: '12px', color: 'var(--text-secondary)'}}>R$ {v.preco}</span>
                    </div>
                    
                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
                      {v.preco_antigo && (
-                       <button onClick={() => togglePromocao(v.id!, v.em_promocao || false)} style={{background: v.em_promocao ? 'transparent' : 'var(--accent-gold)', color: v.em_promocao ? 'var(--accent-gold)' : 'black', border: `1px solid var(--accent-gold)`, padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold'}}>
+                       <button onClick={() => togglePromocao(v.id!, v.em_promocao || false)} style={{background: v.em_promocao ? 'transparent' : 'var(--accent-gold)', color: v.em_promocao ? 'var(--bg-pure)' : 'var(--text-primary)', border: `1px solid var(--accent-gold)`, padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold'}}>
                          {v.em_promocao ? '❌ Tirar Promo' : '🎁 Dar Promo'}
                        </button>
                      )}
-                     <button onClick={() => prepararEdicaoVeiculo(v)} style={{background: '#333', color: 'white', border: '1px solid #555', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px'}}>✏️ Editar</button>
-                     <select value={v.status || ''} onChange={(e) => atualizarStatusVeiculo(v.id!, e.target.value)} style={{padding: '6px', borderRadius: '4px', background: '#000', color: 'white', border: '1px solid #444', fontSize: '11px'}}>
+                     <button onClick={() => prepararEdicaoVeiculo(v)} style={{background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px'}}>✏️ Editar</button>
+                     <select value={v.status || ''} onChange={(e) => atualizarStatusVeiculo(v.id!, e.target.value)} style={{padding: '6px', borderRadius: '4px', background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', fontSize: '11px'}}>
                        <option value="Disponível">Disponível</option>
                        <option value="Oculto">Ocultar</option>
                        <option value="Vendido">Vendido</option>
                      </select>
-                     <button onClick={() => deletarVeiculo(v.id!)} style={{background: '#ff4d4d', color: 'white', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px'}}>🗑️ Excluir</button>
+                     <button onClick={() => deletarVeiculo(v.id!)} style={{background: 'var(--danger)', color: 'white', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px'}}>🗑️ Excluir</button>
                    </div>
                 </div>
               ))}
@@ -843,10 +864,10 @@ export default function App() {
         {adminTab === 'videos' && (
           <div>
             <h3>Resplande Life (Vlogs/Detalhes)</h3>
-            <form onSubmit={salvarVideoGaleria} style={{background: '#111', padding: '15px', borderRadius: '8px', border: '1px solid #262626', marginBottom: '30px'}}>
-              <h3 style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: editingVideoId ? 'var(--accent-gold)' : 'white', fontSize: '14px'}}>
+            <form onSubmit={salvarVideoGaleria} style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '30px'}}>
+              <h3 style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: editingVideoId ? 'var(--accent-gold)' : 'var(--text-primary)', fontSize: '14px'}}>
                 {editingVideoId ? '✏️ Editando Vídeo' : 'Adicionar Vídeo'}
-                {editingVideoId && <button type="button" onClick={cancelarEdicaoVideo} style={{background: 'transparent', color: '#ff4d4d', border: 'none', cursor: 'pointer', fontSize: '12px'}}>Cancelar</button>}
+                {editingVideoId && <button type="button" onClick={cancelarEdicaoVideo} style={{background: 'transparent', color: 'var(--danger)', border: 'none', cursor: 'pointer', fontSize: '12px'}}>Cancelar</button>}
               </h3>
               
               <label>Título</label>
@@ -855,8 +876,8 @@ export default function App() {
               <label>Descrição</label>
               <textarea value={vidForm.descricao || ''} onChange={e => setVidForm({...vidForm, descricao: e.target.value})} rows={2} placeholder="Curto texto..." />
               
-              <label style={{color: '#cfa44c'}}>Arquivo de Vídeo</label>
-              {editingVideoId && <p style={{fontSize: '11px', color: '#888', marginBottom: '5px'}}>Vazio mantém o atual.</p>}
+              <label style={{color: 'var(--accent-gold)'}}>Arquivo de Vídeo</label>
+              {editingVideoId && <p style={{fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '5px'}}>Vazio mantém o atual.</p>}
               
               <input type="file" accept="video/*" onChange={e => setVidForm({...vidForm, file: e.target.files?.[0] || null})} required={!editingVideoId} />
               
@@ -873,15 +894,15 @@ export default function App() {
             
             <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '15px'}}>
               {Array.isArray(videosGaleria) && videosGaleria.map(vid => (
-                <div key={vid.id} style={{position: 'relative', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden', background: '#0a0a0a'}}>
+                <div key={vid.id} style={{position: 'relative', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', background: 'var(--bg-deep)'}}>
                   <video src={`${vid.url}#t=0.001`} preload="metadata" style={{width: '100%', height: '180px', objectFit: 'cover', display: 'block'}} />
                   <div style={{padding: '10px'}}>
-                    <strong style={{color: '#cfa44c', display: 'block', fontSize: '14px', textTransform: 'uppercase'}}>{vid.titulo}</strong>
-                    <p style={{fontSize: '12px', color: '#888', marginTop: '3px'}}>{vid.descricao}</p>
+                    <strong style={{color: 'var(--accent-gold)', display: 'block', fontSize: '14px', textTransform: 'uppercase'}}>{vid.titulo}</strong>
+                    <p style={{fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px'}}>{vid.descricao}</p>
                   </div>
                   <div style={{position: 'absolute', top: '5px', right: '5px', display: 'flex', gap: '5px'}}>
-                    <button onClick={() => prepararEdicaoVideo(vid)} style={{background: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', padding: '4px 8px', fontSize: '10px'}}>Editar</button>
-                    <button onClick={() => deletarVideo(vid.id)} style={{background: '#ff4d4d', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '10px'}}>Apagar</button>
+                    <button onClick={() => prepararEdicaoVideo(vid)} style={{background: 'var(--bg-input)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px', fontSize: '10px'}}>Editar</button>
+                    <button onClick={() => deletarVideo(vid.id)} style={{background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '10px'}}>Apagar</button>
                   </div>
                 </div>
               ))}
@@ -892,12 +913,12 @@ export default function App() {
         {adminTab === 'avaliacoes' && (
           <div>
             <h3>Gerenciar Avaliações</h3>
-            <form onSubmit={e => enviarAvaliacao(e, true)} style={{background: '#111', padding: '15px', borderRadius: '8px', border: '1px solid #262626', marginBottom: '30px'}}>
+            <form onSubmit={e => enviarAvaliacao(e, true)} style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '30px'}}>
               <input placeholder="Nome" value={pubReview.nome || ''} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
               
               <textarea placeholder="Depoimento..." value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
               
-              <label style={{fontSize: '12px', color: '#cfa44c', display: 'block', marginBottom: '5px'}}>Envie seu momento conosco (Foto do Cliente)</label>
+              <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px'}}>Envie seu momento conosco (Foto do Cliente)</label>
               <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
               
               {loading && uploadProgress > 0 && (
@@ -912,18 +933,18 @@ export default function App() {
             </form>
             
             {Array.isArray(avaliacoes) && avaliacoes.map(a => (
-              <div key={a.id} style={{background: '#1a1a1a', padding: '15px', borderRadius: '8px', marginBottom: '10px', border: '1px solid #333', display: 'flex', gap: '15px'}}>
+              <div key={a.id} style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', marginBottom: '10px', border: '1px solid var(--border-color)', display: 'flex', gap: '15px'}}>
                 {a.foto_url && <img src={a.foto_url} style={{width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px'}} />}
                 <div style={{flex: 1}}>
-                  <strong style={{color: 'white', display: 'block'}}>{a.nome}</strong>
-                  <p style={{fontSize: '12px', color: '#a0a0a0', textAlign: 'justify'}}>&quot;{a.texto}&quot;</p>
-                  <span style={{fontSize: '10px', color: a.aprovado ? '#25D366' : '#ff4d4d'}}>{a.aprovado ? 'APROVADA' : 'AGUARDANDO'}</span>
+                  <strong style={{color: 'var(--text-primary)', display: 'block'}}>{a.nome}</strong>
+                  <p style={{fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'justify'}}>&quot;{a.texto}&quot;</p>
+                  <span style={{fontSize: '10px', color: a.aprovado ? '#25D366' : 'var(--danger)'}}>{a.aprovado ? 'APROVADA' : 'AGUARDANDO'}</span>
                 </div>
                 <div style={{display: 'flex', flexDirection: 'column', gap: '5px'}}>
                   {!a.aprovado && (
                     <button onClick={() => aprovarAvaliacao(a.id)} style={{background: '#25D366', color: '#fff', border: 'none', padding: '5px', borderRadius: '4px', fontSize: '10px'}}>Aprovar</button>
                   )}
-                  <button onClick={() => deletarAvaliacao(a.id)} style={{background: '#ff4d4d', color: '#fff', border: 'none', padding: '5px', borderRadius: '4px', fontSize: '10px'}}>🗑️</button>
+                  <button onClick={() => deletarAvaliacao(a.id)} style={{background: 'var(--danger)', color: '#fff', border: 'none', padding: '5px', borderRadius: '4px', fontSize: '10px'}}>🗑️</button>
                 </div>
               </div>
             ))}
@@ -934,10 +955,10 @@ export default function App() {
           <div>
             <h3>Sessão Institucional</h3>
             {[1,2,3,4].map(num => (
-              <div key={num} style={{background: '#1a1a1a', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid #262626'}}>
+              <div key={num} style={{background: 'var(--bg-card)', padding: '15px', borderRadius: '8px', marginBottom: '15px', border: '1px solid var(--border-color)'}}>
                 <label>Retângulo {num}</label>
-                <input value={config[`secao_${num}_titulo`] || ''} onChange={e => setConfig({...config, [`secao_${num}_titulo`]: e.target.value})} style={{background: '#0a0a0a'}} />
-                <textarea value={config[`secao_${num}_texto`] || ''} onChange={e => setConfig({...config, [`secao_${num}_texto`]: e.target.value})} style={{background: '#0a0a0a'}} />
+                <input value={config[`secao_${num}_titulo`] || ''} onChange={e => setConfig({...config, [`secao_${num}_titulo`]: e.target.value})} style={{background: 'var(--bg-input)'}} />
+                <textarea value={config[`secao_${num}_texto`] || ''} onChange={e => setConfig({...config, [`secao_${num}_texto`]: e.target.value})} style={{background: 'var(--bg-input)'}} />
               </div>
             ))}
             <button className="btn-submit-car" onClick={salvarConfig} disabled={loading}>{loading ? 'Salvando...' : 'Salvar Textos'}</button>

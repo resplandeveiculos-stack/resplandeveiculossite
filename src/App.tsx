@@ -463,7 +463,7 @@ export default function App() {
             </>
           )}
 
-          {/* ================= TELA: ESTOQUE (FILTROS DE VOLTA E COMPLETOS) ================= */}
+          {/* ================= TELA: ESTOQUE (FILTROS) ================= */}
           {publicTab === 'estoque' && (
             <section className="filter-panel-refined" style={{marginTop: '10px'}}>
               <div className="filter-grid-6">
@@ -831,9 +831,6 @@ export default function App() {
                    <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
                      <button onClick={() => toggleDestaque(v)} style={{background: v.destaque ? 'var(--accent-gold)' : 'transparent', color: v.destaque ? '#000' : 'var(--text-secondary)', border: `1px solid ${v.destaque ? 'var(--accent-gold)' : 'var(--border-color)'}`, padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px', fontWeight:'bold'}}>
                         ⭐ {v.destaque ? 'Destacado' : 'Destacar'}
-                     </button>
-                     <button onClick={() => togglePromocao(v.id!, v.em_promocao || false)} style={{background: v.em_promocao ? 'transparent' : 'var(--accent-gold)', color: v.em_promocao ? 'var(--text-primary)' : '#000', border: `1px solid var(--accent-gold)`, padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px', fontWeight:'bold'}}>
-                        {v.em_promocao ? '❌ Tirar Promo' : '🎁 Dar Promo'}
                      </button>
                      <button onClick={() => prepararEdicaoVeiculo(v)} style={{background:'transparent', color:'var(--text-primary)', border:'1px solid var(--border-color)', padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px'}}>✏️ Editar</button>
                      <select value={v.status} onChange={(e) => atualizarStatusVeiculo(v.id!, e.target.value)} style={{padding:'6px', borderRadius:'4px', background:'var(--bg-card)', color:'var(--text-primary)', border:'1px solid var(--border-color)', fontSize:'11px'}}>

@@ -103,28 +103,15 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .highlight-car { border-color: var(--accent-gold); transform: scale(1.02); }
 .car-details { display: flex; flex-direction: column; flex-grow: 1; padding: 25px; }
 
-/* ALTURAS FIXAS PARA GARANTIR ALINHAMENTO */
-.car-media-slider { height: 260px; background: var(--bg-deep); position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
+/* ALTURAS FIXAS PARA GARANTIR ALINHAMENTO E FORMATO RETANGULAR */
+.car-media-slider { height: 200px; background: var(--bg-deep); position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
 .car-header-center { text-align: left; margin-bottom: 15px; }
 
-/* FORÇA O TÍTULO A TER O TAMANHO DE 2 LINHAS, MESMO SE FOR CURTO */
-.car-model-title { 
-  font-size: 26px; 
-  font-weight: 800; 
-  color: var(--text-primary); 
-  text-transform: uppercase; 
-  margin: 0; 
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 3.1rem; /* Aproximadamente a altura de 2 linhas para alinhar todos */
-}
+/* FORÇA O TÍTULO A TER O TAMANHO DE 2 LINHAS */
+.car-model-title { font-size: 26px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; margin: 0; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: 3.1rem; }
 
-/* REDUÇÃO DRÁSTICA PARA A HOME (CARD COMPACT) PARA FICAR MENOR QUE O BANNER */
-.car-card.card-compact .car-media-slider { height: 160px; }
+/* REDUÇÃO DRÁSTICA PARA A HOME */
+.car-card.card-compact .car-media-slider { height: 180px; }
 .car-card.card-compact .car-model-title { font-size: 20px; min-height: 2.8rem; }
 .car-card.card-compact .car-details { padding: 15px; }
 
@@ -147,26 +134,19 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .car-meta { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;}
 .separator { color: var(--border-color); }
 
-/* CAIXA DE TAGS COM ALTURA MÍNIMA PARA NÃO DESALINHAR CARDS SEM TAGS */
-.car-tags-container-left { 
-  display: flex; 
-  flex-wrap: wrap; 
-  justify-content: flex-start; 
-  gap: 8px; 
-  margin-bottom: 15px; 
-  min-height: 28px; /* Altura mínima de 1 linha de tags */
-}
+/* CAIXA DE TAGS COM ALTURA MÍNIMA E FLEX WRAP */
+.car-tags-container-left { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; margin-bottom: 15px; min-height: 28px; }
 .car-tag { padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid rgba(150,150,150,0.2); }
 .tag-verde { background-color: rgba(37, 211, 102, 0.05); color: #25D366; border-color: rgba(37, 211, 102, 0.3); }
 
-/* MARGIN-TOP AUTO EMPURRA O FOOTER PARA O FUNDO, INDEPENDENTE DOS TEXTOS ACIMA */
+/* MARGIN-TOP AUTO EMPURRA O FOOTER PARA O FUNDO */
 .card-divider { margin-top: auto; height: 1px; background-color: var(--border-color); margin-bottom: 15px; width: 100%; }
 
-.car-footer { display: flex; justify-content: space-between; align-items: flex-end; } /* Flex-end para alinhar a base do botão e do preço */
+.car-footer { display: flex; justify-content: space-between; align-items: flex-end; } 
 
 /* CONTAINER DE PREÇO COM ALTURA FIXA PARA O "DE R$" */
 .price-container { display: flex; flex-direction: column; justify-content: flex-end; min-height: 45px; }
-.car-price-old { font-size: 12px; color: var(--text-secondary); text-decoration: line-through; margin-bottom: 2px; font-weight: 600; display: block; height: 18px;} /* Height fixa mesmo vazio */
+.car-price-old { font-size: 12px; color: var(--text-secondary); text-decoration: line-through; margin-bottom: 2px; font-weight: 600; display: block; height: 18px;} 
 .car-price { font-size: 22px; font-weight: 800; color: var(--accent-gold); line-height: 1; }
 
 .btn-interesse { background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary); padding: 10px 18px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
@@ -228,7 +208,6 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .btn-avaliar-primary { background: var(--text-primary); color: var(--bg-pure); border: none; padding: 16px 30px; border-radius: 8px; font-size: 15px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.3s; width: 100%; max-width: 320px; box-shadow: 0 4px 15px var(--shadow-glow); font-family: inherit; letter-spacing: 0.5px;}
 .btn-avaliar-primary:hover { opacity: 0.9; transform: translateY(-2px); }
 
-/* BOTÃO VER TODAS AS AVALIAÇÕES RESTAURADO */
 .btn-avaliar-secondary { background: transparent; color: var(--text-primary); border: 2px solid var(--text-primary); padding: 14px 30px; border-radius: 40px; font-size: 13px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; font-family: inherit;}
 .btn-avaliar-secondary:hover { background: var(--text-primary); color: var(--bg-pure); }
 
@@ -257,7 +236,7 @@ p, .about-history, .entrega-depoimento, .accordion-content p, .video-info p { te
 .motivational-text { font-size: 18px; color: var(--accent-gold); font-style: italic; font-weight: 600; line-height: 1.4; text-align: center; }
 .swipe-hint-text { font-size: 10px; color: var(--text-secondary); margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-/* ================= ACORDEÃO INSTITUCIONAL ALINHADO A ESQUERDA ================= */
+/* ================= ACORDEÃO INSTITUCIONAL ================= */
 .about-accordion-section { margin-top: 50px; margin-bottom: 80px; text-align: left; }
 .accordion-wrapper { display: flex; flex-direction: column; gap: 15px; }
 .accordion-item { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 10px 30px var(--shadow-glow);}
@@ -309,6 +288,10 @@ input:focus, textarea:focus, .select-sleek:focus { border-color: var(--accent-go
   .menu-toggle-btn { display: none !important; }
   
   .banners-carousel { height: 350px; }
+  
+  /* FIXANDO TAMANHO DA IMAGEM NO DESKTOP TAMBÉM */
+  .car-media-slider { height: 220px; }
+  .car-card.card-compact .car-media-slider { height: 220px; }
   
   .car-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; align-items: stretch;}
   .avaliacoes-grid { grid-template-columns: repeat(2, 1fr); }

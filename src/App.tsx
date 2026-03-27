@@ -10,7 +10,7 @@ interface Veiculo {
   blindado?: boolean; laudo_cautelar?: boolean; ipva_pago?: boolean; revisoes_concessionaria?: boolean;
   preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
 }
-interface Avaliacao { id: number; nome: string; texto: string; foto_url: string; aprovado: boolean; }
+interface Avaliacao { id: number; nome: string; texto: string; foto_url: string; aprovado: boolean; created_at?: string; }
 interface VideoGaleria { id: number; url: string; titulo: string; descricao: string; }
 interface Banner { id: number; url: string; }
 
@@ -67,12 +67,13 @@ export default function App() {
   const [filtroTipo, setFiltroTipo] = useState('');
 
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
-  const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [expandedGallery, setExpandedGallery] = useState<{ imagens: Midia[], index: number } | null>(null);
+  
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [pubReview, setPubReview] = useState({ nome: '', texto: '' });
   const [pubReviewFile, setPubReviewFile] = useState<File | null>(null);
 
-  const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender'>('home');
+  const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender' | 'avaliacoes'>('home');
   const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', km: '' });
 
   const [fraseAtiva, setFraseAtiva] = useState(0);
@@ -114,11 +115,16 @@ export default function App() {
   async function fetchVideos() { try { const { data } = await supabase.from('galeria_videos').select('*').order('id', { ascending: false }); if (data) setVideosGaleria(data); } catch (e) {} }
   async function fetchBanners() { try { const { data } = await supabase.from('banners').select('*').order('id', { ascending: true }); if (data) setBanners(data); } catch (e) {} }
 
+  const formatarData = (dataStr?: string) => {
+    if (!dataStr) return '';
+    const d = new Date(dataStr);
+    return d.toLocaleDateString('pt-BR');
+  };
+
   const listaVeiculos = Array.isArray(veiculos) ? veiculos : [];
   
   const veiculosFiltrados = listaVeiculos.filter(v => {
     if (v.status !== 'Disponível') return false;
-    
     const matchMarca = !filtroMarca || v.marca === filtroMarca;
     const matchAno = !filtroAno || v.fabricacao === filtroAno;
     const matchCombustivel = !filtroCombustivel || v.combustivel === filtroCombustivel;
@@ -142,6 +148,9 @@ export default function App() {
   });
 
   const veiculosExibidos = publicTab === 'estoque' ? veiculosFiltrados : veiculosFiltrados.slice(0, 3);
+  
+  const avaliacoesAprovadas = Array.isArray(avaliacoes) ? avaliacoes.filter(a => a.aprovado) : [];
+  const avaliacoesHome = avaliacoesAprovadas.filter(a => a.texto && a.texto.trim().length > 0);
 
   const frasesDoBanco = [config?.frase_1, config?.frase_2, config?.frase_3, config?.frase_4, config?.frase_5].filter(Boolean);
   const frasesAtivasCarousel = frasesDoBanco.length > 0 ? frasesDoBanco : FRASES_MOTIVACIONAIS_FALLBACK;
@@ -175,17 +184,9 @@ export default function App() {
     combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: []
   });
 
-  const prepararEdicaoVeiculo = (v: Veiculo) => { 
-    setForm({ ...v }); setEditingId(v.id || null); setAdminTab('novo_veiculo'); setArquivos([]); 
-  };
-
+  const prepararEdicaoVeiculo = (v: Veiculo) => { setForm({ ...v }); setEditingId(v.id || null); setAdminTab('novo_veiculo'); setArquivos([]); };
   const cancelarEdicaoVeiculo = () => {
-    setForm({ 
-      marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', 
-      status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, 
-      ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, 
-      combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] 
-    });
+    setForm({ marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] });
     setEditingId(null); setArquivos([]);
   };
 
@@ -203,23 +204,20 @@ export default function App() {
         setUploadProgress(Math.round(((i + 1) / arquivos.length) * 100));
       }
     }
-    
     const payload = { ...form, galeria: novaGaleria }; delete payload.id; 
     
     if (editingId) { 
       const { error } = await supabase.from('veiculos').update(payload).eq('id', editingId); 
-      if (error) alert("Erro ao atualizar o banco de dados. Motivo: " + error.message);
-      else { alert("Veículo atualizado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+      if (error) alert(error.message); else { alert("Atualizado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
     } else { 
       const { error } = await supabase.from('veiculos').insert([payload]); 
-      if (error) alert("Erro ao publicar! O banco recusou. Motivo: " + error.message);
-      else { alert("Veículo publicado com sucesso!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
+      if (error) alert(error.message); else { alert("Publicado!"); cancelarEdicaoVeiculo(); fetchVeiculos(); setAdminTab('meu_estoque'); }
     }
     setLoading(false); setUploadProgress(0);
   };
 
   const atualizarStatusVeiculo = async (id: number, novoStatus: string) => { await supabase.from('veiculos').update({ status: novoStatus }).eq('id', id); fetchVeiculos(); };
-  const deletarVeiculo = async (id: number) => { if (window.confirm("Excluir este veículo?")) { await supabase.from('veiculos').delete().eq('id', id); fetchVeiculos(); } };
+  const deletarVeiculo = async (id: number) => { if (window.confirm("Excluir?")) { await supabase.from('veiculos').delete().eq('id', id); fetchVeiculos(); } };
   const togglePromocao = async (id: number, statusAtual: boolean) => { await supabase.from('veiculos').update({ em_promocao: !statusAtual }).eq('id', id); fetchVeiculos(); };
 
   const [vidForm, setVidForm] = useState({ file: null as File | null, titulo: '', descricao: '', existingUrl: '' });
@@ -230,7 +228,7 @@ export default function App() {
 
   const salvarVideoGaleria = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vidForm.file && !editingVideoId) { alert("Selecione um arquivo de vídeo!"); return; }
+    if (!vidForm.file && !editingVideoId) { alert("Selecione vídeo!"); return; }
     setLoading(true); setUploadProgress(editingVideoId && !vidForm.file ? 50 : 20);
     
     let url = vidForm.existingUrl;
@@ -242,25 +240,18 @@ export default function App() {
     
     const payload = { url, titulo: vidForm.titulo, descricao: vidForm.descricao };
     if (editingVideoId) { 
-      const {error} = await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); 
-      if(error) alert(error.message); else { alert("Atualizado!"); cancelarEdicaoVideo(); fetchVideos(); }
+      await supabase.from('galeria_videos').update(payload).eq('id', editingVideoId); 
     } else { 
-      const {error} = await supabase.from('galeria_videos').insert([payload]); 
-      if(error) alert(error.message); else { alert("Adicionado!"); cancelarEdicaoVideo(); fetchVideos(); }
+      await supabase.from('galeria_videos').insert([payload]); 
     }
-    setLoading(false); setUploadProgress(0);
+    cancelarEdicaoVideo(); fetchVideos(); setLoading(false); setUploadProgress(0);
   };
-  const deletarVideo = async (id: number) => { if(window.confirm("Apagar vídeo?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
+  const deletarVideo = async (id: number) => { if(window.confirm("Apagar?")) { await supabase.from('galeria_videos').delete().eq('id', id); fetchVideos(); } };
 
   const adicionarBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if(!file) return;
-    setLoading(true);
+    const file = e.target.files?.[0]; if(!file) return; setLoading(true);
     const url = await uploadMidiaSingle(file);
-    if(url) { 
-      const {error} = await supabase.from('banners').insert([{ url }]); 
-      if(error) alert(error.message); else { fetchBanners(); alert("Banner adicionado!"); } 
-    }
+    if(url) { await supabase.from('banners').insert([{ url }]); fetchBanners(); }
     setLoading(false);
   }
   const deletarBanner = async (id: number) => { if(window.confirm("Apagar Banner?")) { await supabase.from('banners').delete().eq('id', id); fetchBanners(); } }
@@ -276,16 +267,14 @@ export default function App() {
   };
   
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
-  const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
+  const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
   const handlePrecoChange = (val: string, field: 'preco' | 'preco_antigo') => { setForm({ ...form, [field]: formatCurrencyBR(val) }); };
   
   const salvarConfig = async () => { 
     setLoading(true); 
     const { id, updated_at, brand_name, brand_sub, endereco, historia, ...configToSave } = config; 
-    const { error } = await supabase.from('site_config').update(configToSave).eq('id', 1); 
-    if (error) alert("Erro ao salvar textos: " + error.message); else alert("Alterações salvas!"); 
-    fetchConfig(); 
-    setLoading(false); 
+    await supabase.from('site_config').update(configToSave).eq('id', 1); 
+    alert("Alterações salvas!"); fetchConfig(); setLoading(false); 
   };
 
   const handleLogoClick = () => {
@@ -294,8 +283,22 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if(expandedGallery) {
+      setExpandedGallery({ ...expandedGallery, index: (expandedGallery.index + 1) % expandedGallery.imagens.length });
+    }
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if(expandedGallery) {
+      setExpandedGallery({ ...expandedGallery, index: (expandedGallery.index - 1 + expandedGallery.imagens.length) % expandedGallery.imagens.length });
+    }
+  };
+
   const HeaderLogo = () => (
-    <div className="brand-zone" onClick={handleLogoClick} style={{cursor: 'pointer', pointerEvents: 'auto'}}>
+    <div className="brand-zone" onClick={handleLogoClick}>
       <img src="https://i.imgur.com/eczLsJ5.png" alt="Logo Resplande" className="brand-logo-img" />
       <div className="brand-text-container">
         <h1 className="brand-name">RESPLANDE<span className="brand-sub">VEÍCULOS</span></h1>
@@ -320,10 +323,9 @@ export default function App() {
           <nav className="desktop-top-nav">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
             <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Estoque</a>
-            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender Veículo</a>
+            <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender</a>
+            <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setPublicTab('avaliacoes'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
-            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
-            <a href="#sobre" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
           </nav>
 
           <div className="header-actions">
@@ -348,10 +350,8 @@ export default function App() {
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
             <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('estoque'); window.scrollTo(0,0); }}>Estoque</a>
             <a href="#vender" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
+            <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('avaliacoes'); window.scrollTo(0,0); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
-            <a href="#depoimentos" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('depoimentos')?.scrollIntoView(), 100); }}>Depoimentos</a>
-            <a href="#sobre" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('sobre')?.scrollIntoView(), 100); }}>Sobre nós</a>
-            <button className="menu-admin-btn" onClick={() => { setIsMobileMenuOpen(false); setView('admin'); }}>⚙️ Admin</button>
           </nav>
         )}
 
@@ -360,7 +360,7 @@ export default function App() {
           {/* ================= TELA: VENDER VEÍCULO ================= */}
           {publicTab === 'vender' && (
             <section className="filter-panel-refined" style={{marginTop: '10px', textAlign: 'center'}}>
-              <h2 className="sec-title" style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>Venda seu Veículo</h2>
+              <h2 className="sec-title" style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>Venda seu Veículo</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '25px' }}>
                 Preencha os dados do seu carro e fale direto com a nossa equipe pelo WhatsApp!
               </p>
@@ -371,24 +371,55 @@ export default function App() {
                 window.open(getWhatsAppLink(msg), '_blank');
               }} className="public-review-form" style={{ textAlign: 'left' }}>
                 
-                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Ano</label>
                 <input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required />
                 
-                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Modelo</label>
                 <input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
                 
-                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Versão</label>
                 <input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
                 
-                <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
+                <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', marginTop: '15px', fontWeight: 'bold'}}>Quilometragem (KM)</label>
                 <input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required />
                 
-                <button type="submit" className="btn-submit-car" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
+                <button type="submit" className="btn-avaliar-primary" style={{ marginTop: '25px' }}>📲 Enviar para o WhatsApp</button>
               </form>
             </section>
           )}
 
-          {/* ================= TELA: ESTOQUE COMPLETO ================= */}
+          {/* ================= TELA: AVALIAÇÕES ================= */}
+          {publicTab === 'avaliacoes' && (
+            <>
+              <h2 className="sec-title" style={{ marginTop: '20px', color: 'var(--text-primary)' }}>
+                {config?.titulo_clientes || "NOSSOS CLIENTES"}
+              </h2>
+              <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '14px'}}>
+                Veja a experiência de quem já realizou negócios conosco.
+              </p>
+
+              <div className="avaliacoes-grid">
+                {avaliacoesAprovadas.map(a => (
+                  <div key={a.id} className="avaliacao-card-full">
+                     <div className="avaliacao-perfil">
+                        {a.foto_url ? (
+                          <img src={a.foto_url} className="avaliacao-img clickable-img" alt="Cliente" onClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} />
+                        ) : (
+                          <div className="no-photo-cliente-small">🚗</div>
+                        )}
+                        <div className="avaliacao-info">
+                          <strong>{a.nome}</strong>
+                          {a.created_at && <span className="entrega-data">{formatarData(a.created_at)}</span>}
+                        </div>
+                     </div>
+                     {a.texto && <p className="avaliacao-texto">&quot;{a.texto}&quot;</p>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ================= TELA: ESTOQUE (FILTROS) ================= */}
           {publicTab === 'estoque' && (
             <section className="filter-panel-refined" style={{marginTop: '10px'}}>
               <div className="filter-grid-6">
@@ -427,7 +458,7 @@ export default function App() {
                 </>
               )}
 
-              <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--accent-gold)'}}>
+              <h2 id="estoque" className="sec-title" style={{textAlign: 'center', marginBottom: '25px', color: 'var(--text-primary)'}}>
                 {publicTab === 'estoque' ? (config?.titulo_estoque || "NOSSO ESTOQUE COMPLETO") : (config?.titulo_top_cars || "TOP CARS DO NOSSO ESTOQUE")}
               </h2>
 
@@ -444,7 +475,7 @@ export default function App() {
                               {midia?.tipo === 'video' ? (
                                 <video src={`${midia?.url}#t=0.001`} controls preload="metadata" className="media-real-img" />
                               ) : (
-                                <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedImage(midia?.url)} />
+                                <img src={midia?.url} className="media-real-img clickable-img" alt={v?.modelo || 'Veiculo'} loading="lazy" onClick={() => setExpandedGallery({ imagens: v.galeria, index })} />
                               )}
                             </div>
                           ))}
@@ -490,16 +521,10 @@ export default function App() {
                 ))}
                 {veiculosFiltrados.length === 0 && <p style={{textAlign: 'center', color: 'var(--text-secondary)', marginTop: '20px'}}>Nenhum veículo encontrado.</p>}
               </div>
-
-              {publicTab === 'home' && (
-                <div style={{textAlign: 'center', margin: '50px 0'}}>
-                  <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>VEJA NOSSO ESTOQUE COMPLETO ➔</button>
-                </div>
-              )}
             </>
           )}
 
-          {/* AS SESSÕES ABAIXO SÓ APARECEM NA HOME */}
+          {/* SESSÕES DA HOME */}
           {publicTab === 'home' && Array.isArray(videosGaleria) && videosGaleria.length > 0 && (
             <section id="resplife" className="sec-videos">
               <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>
@@ -528,24 +553,30 @@ export default function App() {
               </div>
               
               <div className="entregas-carousel" ref={carouselRef}>
-                {Array.isArray(avaliacoes) && avaliacoes.filter(a => a?.aprovado === true || String(a?.aprovado) === 'true').map(a => (
+                {avaliacoesHome.map(a => (
                   <div key={a.id} className="entrega-card-slide">
                     {a.foto_url ? (
-                      <img src={a.foto_url} className="entrega-img clickable-img" alt="Cliente" onClick={() => setExpandedImage(a.foto_url)} />
+                      <img src={a.foto_url} className="entrega-img clickable-img" alt="Cliente" onClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} />
                     ) : (
                       <div className="no-photo-cliente">🚗</div>
                     )}
                     <div className="entrega-overlay">
                       <p className="entrega-depoimento">&quot;{a.texto}&quot;</p>
-                      <span className="entrega-cliente">— {a.nome}</span>
+                      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '5px'}}>
+                        <span className="entrega-cliente">— {a.nome}</span>
+                        {a.created_at && <span className="entrega-data">{formatarData(a.created_at)}</span>}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
               
-              <div style={{textAlign: 'center', marginTop: '20px'}}>
-                <button className="btn-interesse" style={{width: '100%', maxWidth: '300px'}} onClick={() => setShowReviewForm(!showReviewForm)}>
-                  {showReviewForm ? 'Cancelar' : 'Deixar minha avaliação'}
+              <div className="avaliacoes-actions">
+                <button className="btn-avaliar-primary" onClick={() => setShowReviewForm(!showReviewForm)}>
+                  {showReviewForm ? 'Cancelar Avaliação' : 'Deixar minha avaliação'}
+                </button>
+                <button className="btn-avaliar-secondary" onClick={() => { setPublicTab('avaliacoes'); window.scrollTo({top: 0, behavior: 'smooth'})}}>
+                  Ver todas as avaliações ➔
                 </button>
               </div>
               
@@ -553,14 +584,14 @@ export default function App() {
                 <form onSubmit={e => enviarAvaliacao(e, false)} className="public-review-form">
                   <input placeholder="Seu Nome" value={pubReview.nome || ''} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
                   <textarea placeholder="Como foi sua experiência?" value={pubReview.texto || ''} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
-                  <label style={{fontSize: '12px', color: 'var(--accent-gold)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
+                  <label style={{fontSize: '12px', color: 'var(--text-primary)', display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Envie seu momento conosco (Opcional)</label>
                   <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
                   {loading && uploadProgress > 0 && (
                     <div className="progress-bar-container">
                       <div className="progress-bar-fill" style={{ width: `${uploadProgress}%` }} />
                     </div>
                   )}
-                  <button type="submit" className="btn-submit-car" disabled={loading}>
+                  <button type="submit" className="btn-avaliar-primary" style={{marginTop: '15px'}} disabled={loading}>
                     {loading ? 'Enviando...' : 'Enviar Avaliação'}
                   </button>
                 </form>
@@ -610,14 +641,40 @@ export default function App() {
           </a>
         </div>
 
-        {expandedImage && (
-          <div className="image-modal-overlay" onClick={() => setExpandedImage(null)}>
+        {/* MODAL DA GALERIA COM NAVEGAÇÃO NEXT/PREV */}
+        {expandedGallery && expandedGallery.imagens.length > 0 && (
+          <div className="image-modal-overlay" onClick={() => setExpandedGallery(null)}>
             <div className="image-modal-content" onClick={e => e.stopPropagation()}>
-              <button className="btn-close-modal" onClick={() => setExpandedImage(null)}>×</button>
-              <img src={expandedImage} alt="Expandida" />
+              <button className="btn-close-modal" onClick={() => setExpandedGallery(null)}>×</button>
+              
+              {expandedGallery.imagens.length > 1 && (
+                <button className="modal-nav-btn modal-prev" onClick={prevImage}>&#10094;</button>
+              )}
+
+              {expandedGallery.imagens[expandedGallery.index].tipo === 'video' ? (
+                 <video src={expandedGallery.imagens[expandedGallery.index].url} controls autoPlay className="modal-media-item" />
+              ) : (
+                 <img src={expandedGallery.imagens[expandedGallery.index].url} alt="Zoom" className="modal-media-item" />
+              )}
+
+              {expandedGallery.imagens.length > 1 && (
+                <button className="modal-nav-btn modal-next" onClick={nextImage}>&#10095;</button>
+              )}
+              
+              {expandedGallery.imagens.length > 1 && (
+                <div className="modal-counter">
+                  {expandedGallery.index + 1} / {expandedGallery.imagens.length}
+                </div>
+              )}
             </div>
           </div>
         )}
+
+        {/* FOOTER NOVO COM BOTÃO DE ADMIN ESCONDIDO */}
+        <footer className="footer-main">
+           <p>© {new Date().getFullYear()} Resplande Veículos. Todos os direitos reservados.</p>
+           <button onClick={() => { setView('admin'); window.scrollTo(0,0); }} className="btn-hidden-admin">Acesso Restrito</button>
+        </footer>
       </div>
     );
   }

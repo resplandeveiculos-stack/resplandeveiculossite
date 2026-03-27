@@ -511,7 +511,6 @@ export default function App() {
                   <div key={v.id} id={`carro-${v.id}`} className={`car-card ${publicTab === 'home' ? 'card-compact' : ''}`}>
                     <div className="car-media-slider">
                       {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
-                      {/* SELO DE VÍDEO SE HOUVER VÍDEO */}
                       {v.galeria?.some(m => m.tipo === 'video') && <div className="badge-video">▶ VÍDEO</div>}
                       
                       <div className="media-scroller">
@@ -622,7 +621,6 @@ export default function App() {
                 )}
               </section>
 
-              {/* CARROSSEL DE FRASES MOTIVACIONAIS QUE ARRASTA PRO LADO */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
                 <div className="motivational-carousel">
@@ -646,7 +644,6 @@ export default function App() {
                           <span className="accordion-icon">{activeAccordion === item.id ? '−' : '+'}</span>
                         </div>
                         <div className="accordion-content">
-                          {/* SISTEMA QUE TRANSFORMA TEXTO EM TÓPICOS ALINHADOS À ESQUERDA SE TIVER QUEBRA DE LINHA */}
                           <ul style={{ padding: '25px 20px', listStyleType: 'none', margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
                             {item.texto.split('\n').map((linha: string, i: number) => linha.trim() ? (
                               <li key={i} style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', display: 'flex', gap: '8px', textAlign: 'left' }}>
@@ -831,6 +828,9 @@ export default function App() {
                    <div style={{display:'flex', flexDirection:'column', gap:'6px'}}>
                      <button onClick={() => toggleDestaque(v)} style={{background: v.destaque ? 'var(--accent-gold)' : 'transparent', color: v.destaque ? '#000' : 'var(--text-secondary)', border: `1px solid ${v.destaque ? 'var(--accent-gold)' : 'var(--border-color)'}`, padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px', fontWeight:'bold'}}>
                         ⭐ {v.destaque ? 'Destacado' : 'Destacar'}
+                     </button>
+                     <button onClick={() => togglePromocao(v.id!, v.em_promocao || false)} style={{background: v.em_promocao ? 'transparent' : 'var(--accent-gold)', color: v.em_promocao ? 'var(--text-primary)' : '#000', border: `1px solid var(--accent-gold)`, padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px', fontWeight:'bold'}}>
+                        {v.em_promocao ? '❌ Tirar Promo' : '🎁 Dar Promo'}
                      </button>
                      <button onClick={() => prepararEdicaoVeiculo(v)} style={{background:'transparent', color:'var(--text-primary)', border:'1px solid var(--border-color)', padding:'6px', borderRadius:'4px', cursor:'pointer', fontSize:'11px'}}>✏️ Editar</button>
                      <select value={v.status} onChange={(e) => atualizarStatusVeiculo(v.id!, e.target.value)} style={{padding:'6px', borderRadius:'4px', background:'var(--bg-card)', color:'var(--text-primary)', border:'1px solid var(--border-color)', fontSize:'11px'}}>

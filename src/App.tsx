@@ -7,8 +7,7 @@ interface Veiculo {
   id?: number; marca: string; modelo: string; fabricacao: string; km: string; preco: string; 
   status: 'Disponível' | 'Vendido' | 'Oculto'; galeria: Midia[]; unico_dono: boolean;
   blindado?: boolean; laudo_cautelar?: boolean; ipva_pago?: boolean; revisoes_concessionaria?: boolean;
-  teto_solar?: boolean;
-  preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
+  teto_solar?: boolean; preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
   tracao?: string; destaque?: boolean;
 }
 interface Avaliacao { id: number; nome: string; texto: string; foto_url: string; aprovado: boolean; created_at?: string; }
@@ -43,7 +42,6 @@ const formatarData = (dataStr?: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
-// COMPONENTE DROPDOWN PARA MÚLTIPLA ESCOLHA NOS FILTROS
 const FilterDropdown = ({ label, options, selected, setSelected }: { label: string, options: {label: string, value: string}[], selected: string[], setSelected: any }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -75,7 +73,6 @@ const FilterDropdown = ({ label, options, selected, setSelected }: { label: stri
   );
 }
 
-// COMPONENTE DE AVALIAÇÃO COM "LER MAIS" E SEM EMOJI
 const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClick: () => void, isHome?: boolean }) => {
   const [expandido, setExpandido] = useState(false);
   const isLong = a.texto && a.texto.length > 100;
@@ -185,7 +182,6 @@ export default function App() {
     }
   }, [veiculos]);
 
-  // ROLAGEM AUTOMÁTICA COM PAUSA INTELIGENTE
   useEffect(() => {
     const scrollCarousel = (element: HTMLDivElement | null, step: number, checkExpandido = false) => {
       if (element && view === 'public' && publicTab === 'home') {
@@ -277,11 +273,6 @@ export default function App() {
     const url = `${window.location.origin}?carro=${v.id}`;
     const msg = encodeURIComponent(`Olha esse veículo na Resplande Veículos!\n\n• *${v.marca} ${v.modelo}*\n• Ano: ${v.fabricacao}\n• *R$ ${v.preco}*\n\nVeja as fotos e todos os detalhes clicando no link abaixo:\n${url}`);
     window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
-  };
-
-  const handleEncomendar = () => {
-    const msg = encodeURIComponent(`Olá! Estou procurando um veículo específico que não encontrei no site. Vocês podem me ajudar a encontrar?`);
-    window.open(getWhatsAppLink(msg), '_blank');
   };
 
   async function uploadMidiaSingle(file: File) {
@@ -412,7 +403,6 @@ export default function App() {
     let foto_url = '';
     if (pubReviewFile) { const url = await uploadMidiaSingle(pubReviewFile); if (url) foto_url = url; }
     
-    // A AVALIAÇÃO JÁ VAI DIRETO COM APROVADO: TRUE MESMO PELO SITE
     const payload: any = { nome: pubReview.nome, texto: pubReview.texto, foto_url, aprovado: true };
     if (isAdmin && pubReviewData) { payload.created_at = pubReviewData; }
     
@@ -495,7 +485,6 @@ export default function App() {
     { id: 4, titulo: config?.secao_4_titulo, texto: config?.secao_4_texto }
   ].filter(item => item.titulo);
 
-  // ================= VIEW PÚBLICA =================
   if (view === 'public') {
     return (
       <div className={`app-public theme-${theme}`}>
@@ -538,7 +527,6 @@ export default function App() {
 
         <main className="content-main">
 
-          {/* ================= TELA: ENCOMENDAR VEÍCULO ================= */}
           {publicTab === 'encomendar' && (
             <section className="filter-panel-refined" style={{textAlign: 'center'}}>
               <h2 className="sec-title">Nós procuramos para você</h2>
@@ -559,7 +547,6 @@ export default function App() {
             </section>
           )}
 
-          {/* ================= TELA: VENDER VEÍCULO ================= */}
           {publicTab === 'vender' && (
             <section className="filter-panel-refined" style={{textAlign: 'center'}}>
               <h2 className="sec-title">Venda seu Veículo</h2>
@@ -580,7 +567,6 @@ export default function App() {
             </section>
           )}
 
-          {/* ================= TELA: AVALIAÇÕES ================= */}
           {publicTab === 'avaliacoes' && (
             <>
               <h2 className="sec-title" style={{ marginTop: '20px' }}>{config?.titulo_clientes || "NOSSOS CLIENTES"}</h2>
@@ -592,7 +578,6 @@ export default function App() {
             </>
           )}
 
-          {/* ================= TELA: ESTOQUE (FILTROS) ================= */}
           {publicTab === 'estoque' && (
             <section className="filter-panel-refined" style={{marginTop: '10px'}}>
               <div className="filter-grid-6">
@@ -612,7 +597,6 @@ export default function App() {
             </section>
           )}
 
-          {/* ================= HOME E ESTOQUE (VITRINE) ================= */}
           {(publicTab === 'home' || publicTab === 'estoque') && (
             <>
               {publicTab === 'home' && (
@@ -626,7 +610,6 @@ export default function App() {
                     <div className="banners-carousel" ref={bannersRef}>
                       {banners.map(b => (
                         <div key={b.id} className="banner-slide">
-                          {/* BLOQUEIO ABSOLUTO DE ARRASTE DA IMAGEM NO REACT */}
                           <img src={b.url} alt="Banner" draggable={false} onDragStart={(e) => e.preventDefault()} />
                         </div>
                       ))}
@@ -702,7 +685,6 @@ export default function App() {
                 </div>
               )}
               
-              {/* BOTÃO NÃO ACHOU O CARRO -> ENCOMENDE */}
               {publicTab === 'estoque' && (
                 <div style={{textAlign: 'center', margin: '60px 0 20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)'}}>
                   <h3 style={{color: 'var(--text-primary)', marginBottom: '10px', fontSize: '18px', fontWeight: 'bold'}}>Não encontrou o que procurava?</h3>
@@ -715,7 +697,6 @@ export default function App() {
             </>
           )}
 
-          {/* ================= SESSÕES EXTRAS (HOME) ================= */}
           {publicTab === 'home' && (
             <>
               {videosGaleria.length > 0 && (
@@ -762,7 +743,6 @@ export default function App() {
                 )}
               </section>
 
-              {/* CARROSSEL DE FRASES MOTIVACIONAIS */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
                 <div className="motivational-carousel" ref={frasesRef}>
@@ -808,7 +788,6 @@ export default function App() {
           <a href={getWhatsAppLink()} className="fab-wpp" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" width="30" height="30"><path fill="currentColor" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 15 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67M8.53 7.33C8.37 7.33 8.1 7.39 7.87 7.64C7.65 7.89 7 8.5 7 9.71C7 10.93 7.89 12.1 8 12.27C8.14 12.44 9.76 14.94 12.25 16C12.84 16.27 13.3 16.42 13.66 16.53C14.25 16.72 14.79 16.69 15.22 16.63C15.7 16.56 16.68 16.03 16.89 15.45C17.1 14.87 17.1 14.38 17.04 14.27C16.97 14.17 16.81 14.11 16.56 14C16.31 13.86 15.09 13.26 14.87 13.18C14.64 13.1 14.5 13.06 14.31 13.3C14.15 13.55 13.67 14.11 13.53 14.27C13.38 14.44 13.24 14.46 13 14.34C12.74 14.21 11.94 13.95 11 13.11C10.26 12.45 9.77 11.64 9.62 11.39C9.5 11.15 9.61 11 9.73 10.89C9.84 10.78 10 10.6 10.1 10.45C10.23 10.31 10.27 10.2 10.35 10.04C10.43 9.87 10.39 9.73 10.33 9.61C10.27 9.5 9.77 8.26 9.56 7.77C9.36 7.29 9.16 7.35 9 7.34C8.86 7.34 8.7 7.33 8.53 7.33Z"/></svg></a>
         </div>
 
-        {/* MODAL DA GALERIA COM NAVEGAÇÃO NEXT/PREV */}
         {expandedGallery && expandedGallery.imagens.length > 0 && (
           <div className="image-modal-overlay" onClick={() => setExpandedGallery(null)}>
             <div className="image-modal-content" onClick={e => e.stopPropagation()}>
@@ -908,7 +887,6 @@ export default function App() {
               <select value={form.cambio} onChange={e => setForm({...form, cambio: e.target.value})} className="select-sleek"><option value="Automático">Auto</option><option value="Manual">Manual</option></select>
             </div>
             
-            {/* NOVO CAMPO: TRAÇÃO E TIPO */}
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
               <select value={form.tipo_carro} onChange={e => setForm({...form, tipo_carro: e.target.value})} className="select-sleek"><option value="Hatch">Hatch</option><option value="Sedan">Sedan</option><option value="SUV">SUV</option><option value="Picape">Picape</option></select>
               <select value={form.tracao || ''} onChange={e => setForm({...form, tracao: e.target.value})} className="select-sleek"><option value="">Tração (Opcional)</option><option value="4x2">4x2</option><option value="4x4">4x4</option><option value="AWD">AWD</option></select>
@@ -929,7 +907,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* GERENCIADOR DE FOTOS ANTIGAS */}
             {form.galeria && form.galeria.length > 0 && (
               <div style={{background:'var(--bg-input)', padding:'15px', borderRadius:'8px', marginBottom:'15px'}}>
                 <label style={{color:'var(--accent-gold)', fontSize:'12px', display:'block', marginBottom:'10px', fontWeight:'bold'}}>Mídias Salvas (Você pode reordenar ou excluir)</label>

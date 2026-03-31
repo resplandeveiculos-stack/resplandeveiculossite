@@ -7,8 +7,9 @@ interface Veiculo {
   id?: number; marca: string; modelo: string; fabricacao: string; km: string; preco: string; 
   status: 'Disponível' | 'Vendido' | 'Oculto'; galeria: Midia[]; unico_dono: boolean;
   blindado?: boolean; laudo_cautelar?: boolean; ipva_pago?: boolean; revisoes_concessionaria?: boolean;
+  teto_solar?: boolean;
   preco_antigo?: string; em_promocao?: boolean; combustivel?: string; cambio?: string; tipo_carro?: string;
-  destaque?: boolean;
+  tracao?: string; destaque?: boolean;
 }
 interface Avaliacao { id: number; nome: string; texto: string; foto_url: string; aprovado: boolean; created_at?: string; }
 interface VideoGaleria { id: number; url: string; titulo: string; descricao: string; }
@@ -35,6 +36,78 @@ const formatCurrencyBR = (value: any) => {
 
 const sanitizeNumber = (str: any) => Number(String(str || '').replace(/\D/g, ''));
 
+const formatarData = (dataStr?: string) => {
+  if (!dataStr) return '';
+  const date = new Date(dataStr);
+  date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+  return date.toLocaleDateString('pt-BR');
+};
+
+// COMPONENTE DROPDOWN PARA MÚLTIPLA ESCOLHA NOS FILTROS
+const FilterDropdown = ({ label, options, selected, setSelected }: { label: string, options: {label: string, value: string}[], selected: string[], setSelected: any }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="filter-group" style={{position: 'relative', width: '100%'}}>
+      <label>{label}</label>
+      <div className="select-sleek" onClick={() => setOpen(!open)} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+          {selected.length === 0 ? 'Todos' : `${selected.length} selecionado(s)`}
+        </span>
+        <span style={{fontSize:'10px'}}>▼</span>
+      </div>
+      {open && (
+        <>
+          <div style={{position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:10}} onClick={() => setOpen(false)} />
+          <div style={{position:'absolute', top:'100%', left:0, width:'100%', maxHeight:'250px', overflowY:'auto', background:'var(--bg-card)', border:'1px solid var(--border-color)', borderRadius:'8px', marginTop:'4px', zIndex:11, boxShadow:'0 10px 25px rgba(0,0,0,0.5)', padding:'10px'}}>
+            {options.map(opt => (
+              <label key={opt.value} style={{display:'flex', alignItems:'center', gap:'10px', padding:'10px 5px', cursor:'pointer', borderBottom:'1px solid var(--border-color)'}}>
+                <input type="checkbox" checked={selected.includes(opt.value)} onChange={(e) => {
+                  if (e.target.checked) setSelected([...selected, opt.value]);
+                  else setSelected(selected.filter((x: string) => x !== opt.value));
+                }} style={{width:'18px', height:'18px', margin:0, accentColor: 'var(--accent-gold)'}} />
+                <span style={{fontSize:'13px', color:'var(--text-primary)'}}>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// COMPONENTE DE AVALIAÇÃO COM "LER MAIS" E SEM EMOJI
+const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClick: () => void, isHome?: boolean }) => {
+  const [expandido, setExpandido] = useState(false);
+  const isLong = a.texto && a.texto.length > 100;
+
+  if (isHome) {
+    return (
+      <div className="entrega-card-slide">
+        {a.foto_url ? <img src={a.foto_url} className="entrega-img clickable-img" onClick={onImgClick} /> : <div className="no-photo-cliente">{a.nome.charAt(0).toUpperCase()}</div>}
+        <div className="entrega-overlay" style={{ height: expandido ? '100%' : 'auto', background: expandido ? 'rgba(0,0,0,0.9)' : '' }}>
+          <p className={`entrega-depoimento ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
+          {isLong && <button className="btn-ver-mais" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ler mais'}</button>}
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '5px', width: '100%'}}>
+            <span className="entrega-cliente">— {a.nome}</span>
+            <span className="entrega-data">{formatarData(a.created_at)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="avaliacao-card-full">
+       <div className="avaliacao-perfil">
+          {a.foto_url ? <img src={a.foto_url} className="avaliacao-img clickable-img" onClick={onImgClick} /> : <div className="no-photo-cliente-small">{a.nome.charAt(0).toUpperCase()}</div>}
+          <div className="avaliacao-info"><strong>{a.nome}</strong><span className="entrega-data">{formatarData(a.created_at)}</span></div>
+       </div>
+       <p className={`avaliacao-texto ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
+       {isLong && <button className="btn-ver-mais" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ler mais'}</button>}
+    </div>
+  );
+};
+
 export default function App() {
   const [view, setView] = useState<'public' | 'admin'>('public');
   const [adminTab, setAdminTab] = useState<'inicio' | 'novo_veiculo' | 'meu_estoque' | 'videos' | 'avaliacoes' | 'institucional'>('inicio');
@@ -58,13 +131,15 @@ export default function App() {
     titulo_institucional: "CONHEÇA A RESPLANDE"
   });
 
-  const [filtroMarca, setFiltroMarca] = useState('');
-  const [filtroAno, setFiltroAno] = useState('');
-  const [filtroPreco, setFiltroPreco] = useState('');
-  const [filtroKm, setFiltroKm] = useState('');
-  const [filtroCombustivel, setFiltroCombustivel] = useState('');
-  const [filtroCambio, setFiltroCambio] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('');
+  const [filtroMarca, setFiltroMarca] = useState<string[]>([]);
+  const [filtroAno, setFiltroAno] = useState<string[]>([]);
+  const [filtroPreco, setFiltroPreco] = useState<string[]>([]);
+  const [filtroKm, setFiltroKm] = useState<string[]>([]);
+  const [filtroCombustivel, setFiltroCombustivel] = useState<string[]>([]);
+  const [filtroCambio, setFiltroCambio] = useState<string[]>([]);
+  const [filtroTipo, setFiltroTipo] = useState<string[]>([]);
+  
+  const [filtrosAtivos, setFiltrosAtivos] = useState({ marca: [] as string[], ano: [] as string[], preco: [] as string[], km: [] as string[], combustivel: [] as string[], cambio: [] as string[], tipo: [] as string[] });
 
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
   const [expandedGallery, setExpandedGallery] = useState<{ imagens: Midia[], index: number } | null>(null);
@@ -72,14 +147,19 @@ export default function App() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [pubReview, setPubReview] = useState({ nome: '', texto: '' });
   const [pubReviewFile, setPubReviewFile] = useState<File | null>(null);
+  const [pubReviewData, setPubReviewData] = useState('');
+  const [editDateId, setEditDateId] = useState<number | null>(null);
+  const [tempDate, setTempDate] = useState('');
 
-  const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender' | 'avaliacoes'>('home');
+  const [publicTab, setPublicTab] = useState<'home' | 'estoque' | 'vender' | 'avaliacoes' | 'encomendar'>('home');
   const [formVender, setFormVender] = useState({ ano: '', modelo: '', versao: '', cor: '', combustivel: 'Gasolina', km: '', valor: '' });
+  const [formEncomenda, setFormEncomenda] = useState({ marca: '', modelo: '', anoMin: '', valorMax: '', cor: '' });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const carouselRef = useRef<any>(null);
   const bannersRef = useRef<any>(null);
+  const frasesRef = useRef<any>(null);
 
   useEffect(() => {
     document.body.className = view === 'admin' ? 'theme-dark' : `theme-${theme}`;
@@ -89,7 +169,6 @@ export default function App() {
     fetchConfig(); fetchVeiculos(); fetchAvaliacoes(); fetchVideos(); fetchBanners(); 
   }, []);
 
-  // SCROLL PARA CARRO ESPECÍFICO SE VIER PELO LINK DO WHATSAPP
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const carroId = urlParams.get('carro');
@@ -106,17 +185,23 @@ export default function App() {
     }
   }, [veiculos]);
 
+  // ROLAGEM AUTOMÁTICA COM PAUSA INTELIGENTE
   useEffect(() => {
-    const scrollCarousel = (element: HTMLDivElement | null, step: number) => {
+    const scrollCarousel = (element: HTMLDivElement | null, step: number, checkExpandido = false) => {
       if (element && view === 'public' && publicTab === 'home') {
+        if (element.matches(':hover') || element.matches(':active')) return;
+        if (checkExpandido && document.querySelector('.expandido')) return;
+
         const { scrollLeft, scrollWidth, clientWidth } = element;
         if (scrollLeft + clientWidth >= scrollWidth - 10) element.scrollTo({ left: 0, behavior: 'smooth' });
         else element.scrollBy({ left: step, behavior: 'smooth' });
       }
     };
+    
     const intervalCarousels = setInterval(() => {
-      if (carouselRef.current) scrollCarousel(carouselRef.current, carouselRef.current.clientWidth / 2);
+      if (carouselRef.current) scrollCarousel(carouselRef.current, carouselRef.current.clientWidth / 2, true);
       if (bannersRef.current) scrollCarousel(bannersRef.current, bannersRef.current.clientWidth);
+      if (frasesRef.current) scrollCarousel(frasesRef.current, frasesRef.current.clientWidth);
     }, 4000);
     return () => clearInterval(intervalCarousels);
   }, [view, publicTab]);
@@ -127,33 +212,41 @@ export default function App() {
   async function fetchVideos() { try { const { data } = await supabase.from('galeria_videos').select('*').order('id', { ascending: false }); if (data) setVideosGaleria(data); } catch (e) {} }
   async function fetchBanners() { try { const { data } = await supabase.from('banners').select('*').order('id', { ascending: true }); if (data) setBanners(data); } catch (e) {} }
 
-  const formatarData = (dataStr?: string) => {
-    if (!dataStr) return '';
-    return new Date(dataStr).toLocaleDateString('pt-BR');
-  };
-
   const listaVeiculos = Array.isArray(veiculos) ? veiculos : [];
   
+  const aplicarFiltros = () => {
+    setFiltrosAtivos({ marca: filtroMarca, ano: filtroAno, preco: filtroPreco, km: filtroKm, combustivel: filtroCombustivel, cambio: filtroCambio, tipo: filtroTipo });
+  };
+
+  const limparFiltros = () => {
+    setFiltroMarca([]); setFiltroAno([]); setFiltroPreco([]); setFiltroKm([]); setFiltroCombustivel([]); setFiltroCambio([]); setFiltroTipo([]);
+    setFiltrosAtivos({ marca: [], ano: [], preco: [], km: [], combustivel: [], cambio: [], tipo: [] });
+  };
+
   const veiculosFiltrados = listaVeiculos.filter(v => {
     if (v.status !== 'Disponível') return false;
-    const matchMarca = !filtroMarca || v.marca === filtroMarca;
-    const matchAno = !filtroAno || v.fabricacao === filtroAno;
-    const matchCombustivel = !filtroCombustivel || v.combustivel === filtroCombustivel;
-    const matchCambio = !filtroCambio || v.cambio === filtroCambio;
-    const matchTipo = !filtroTipo || v.tipo_carro === filtroTipo;
+    const matchMarca = filtrosAtivos.marca.length === 0 || filtrosAtivos.marca.includes(v.marca);
+    const matchAno = filtrosAtivos.ano.length === 0 || filtrosAtivos.ano.includes(v.fabricacao);
+    const matchCombustivel = filtrosAtivos.combustivel.length === 0 || (v.combustivel && filtrosAtivos.combustivel.includes(v.combustivel));
+    const matchCambio = filtrosAtivos.cambio.length === 0 || (v.cambio && filtrosAtivos.cambio.includes(v.cambio));
+    const matchTipo = filtrosAtivos.tipo.length === 0 || (v.tipo_carro && filtrosAtivos.tipo.includes(v.tipo_carro));
     
     const kmNum = sanitizeNumber(v.km);
-    let matchKm = true;
-    if (filtroKm === 'ate-30k') matchKm = kmNum <= 30000;
-    else if (filtroKm === '30k-60k') matchKm = kmNum > 30000 && kmNum <= 60000;
-    else if (filtroKm === 'acima-60k') matchKm = kmNum > 60000;
+    const matchKm = filtrosAtivos.km.length === 0 || filtrosAtivos.km.some(k => {
+      if (k === 'ate-30k') return kmNum <= 30000;
+      if (k === '30k-60k') return kmNum > 30000 && kmNum <= 60000;
+      if (k === 'acima-60k') return kmNum > 60000;
+      return true;
+    });
 
     const precoNum = sanitizeNumber(v.preco); 
-    let matchPreco = true;
-    if (filtroPreco === 'ate-60k') matchPreco = precoNum <= 6000000; 
-    else if (filtroPreco === '60k-100k') matchPreco = precoNum > 6000000 && precoNum <= 10000000;
-    else if (filtroPreco === '100k-150k') matchPreco = precoNum > 10000000 && precoNum <= 15000000;
-    else if (filtroPreco === 'acima-150k') matchPreco = precoNum > 15000000;
+    const matchPreco = filtrosAtivos.preco.length === 0 || filtrosAtivos.preco.some(p => {
+      if (p === 'ate-60k') return precoNum <= 6000000; 
+      if (p === '60k-100k') return precoNum > 6000000 && precoNum <= 10000000;
+      if (p === '100k-150k') return precoNum > 10000000 && precoNum <= 15000000;
+      if (p === 'acima-150k') return precoNum > 15000000;
+      return true;
+    });
 
     return matchMarca && matchAno && matchKm && matchPreco && matchCombustivel && matchCambio && matchTipo;
   });
@@ -180,11 +273,15 @@ export default function App() {
     window.open(getWhatsAppLink(msg), '_blank');
   };
 
-  // BOTÃO DE COMPARTILHAR CORRIGIDO PARA O LINK UNIVERSAL DO WHATSAPP
   const handleShare = (v: Veiculo) => {
     const url = `${window.location.origin}?carro=${v.id}`;
     const msg = encodeURIComponent(`Olha esse veículo na Resplande Veículos!\n\n• *${v.marca} ${v.modelo}*\n• Ano: ${v.fabricacao}\n• *R$ ${v.preco}*\n\nVeja as fotos e todos os detalhes clicando no link abaixo:\n${url}`);
     window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
+  };
+
+  const handleEncomendar = () => {
+    const msg = encodeURIComponent(`Olá! Estou procurando um veículo específico que não encontrei no site. Vocês podem me ajudar a encontrar?`);
+    window.open(getWhatsAppLink(msg), '_blank');
   };
 
   async function uploadMidiaSingle(file: File) {
@@ -201,8 +298,8 @@ export default function App() {
   const [form, setForm] = useState<Veiculo>({ 
     marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', 
     status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, 
-    ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, 
-    combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: []
+    ipva_pago: false, revisoes_concessionaria: false, teto_solar: false, em_promocao: false, 
+    combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', tracao: '', galeria: []
   });
 
   const prepararEdicaoVeiculo = (v: Veiculo) => { 
@@ -213,8 +310,8 @@ export default function App() {
     setForm({ 
       marca: '', modelo: '', fabricacao: '', km: '', preco: '', preco_antigo: '', 
       status: 'Disponível', unico_dono: false, blindado: false, laudo_cautelar: false, 
-      ipva_pago: false, revisoes_concessionaria: false, em_promocao: false, 
-      combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', galeria: [] 
+      ipva_pago: false, revisoes_concessionaria: false, teto_solar: false, em_promocao: false, 
+      combustivel: 'Flex', cambio: 'Automático', tipo_carro: 'Hatch', tracao: '', galeria: [] 
     });
     setEditingId(null); setArquivos([]);
   };
@@ -314,15 +411,29 @@ export default function App() {
     e.preventDefault(); setLoading(true); setUploadProgress(50);
     let foto_url = '';
     if (pubReviewFile) { const url = await uploadMidiaSingle(pubReviewFile); if (url) foto_url = url; }
-    const {error} = await supabase.from('avaliacoes').insert([{ nome: pubReview.nome, texto: pubReview.texto, foto_url, aprovado: isAdmin }]);
-    if (error) alert(error.message); else alert(isAdmin ? "Publicada!" : "Enviada! Aguarde aprovação.");
-    setPubReview({ nome: '', texto: '' }); setPubReviewFile(null); setShowReviewForm(false); fetchAvaliacoes();
+    
+    // A AVALIAÇÃO JÁ VAI DIRETO COM APROVADO: TRUE MESMO PELO SITE
+    const payload: any = { nome: pubReview.nome, texto: pubReview.texto, foto_url, aprovado: true };
+    if (isAdmin && pubReviewData) { payload.created_at = pubReviewData; }
+    
+    const {error} = await supabase.from('avaliacoes').insert([payload]);
+    if (error) alert(error.message); else alert("Avaliação publicada com sucesso!");
+    setPubReview({ nome: '', texto: '' }); setPubReviewFile(null); setPubReviewData(''); setShowReviewForm(false); fetchAvaliacoes();
     setLoading(false); setUploadProgress(0);
   };
   
   const aprovarAvaliacao = async (id: number) => { await supabase.from('avaliacoes').update({ aprovado: true }).eq('id', id); fetchAvaliacoes(); };
   const deletarAvaliacao = async (id: number) => { if(window.confirm("Apagar avaliação?")) { await supabase.from('avaliacoes').delete().eq('id', id); fetchAvaliacoes(); } };
   
+  const salvarDataAvaliacao = async (id: number) => {
+    if (!tempDate) return;
+    setLoading(true);
+    await supabase.from('avaliacoes').update({ created_at: tempDate }).eq('id', id);
+    setEditDateId(null);
+    fetchAvaliacoes();
+    setLoading(false);
+  };
+
   const handlePrecoChange = (val: string, field: string, formObj: any, setFormObj: any) => { 
     setFormObj({ ...formObj, [field]: formatCurrencyBR(val) }); 
   };
@@ -393,7 +504,8 @@ export default function App() {
           
           <nav className="desktop-top-nav">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Estoque</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Comprar</a>
+            <a href="#encomendar" onClick={(e) => { e.preventDefault(); setPublicTab('encomendar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Encomendar</a>
             <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender</a>
             <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setPublicTab('avaliacoes'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
@@ -416,7 +528,8 @@ export default function App() {
         {isMobileMenuOpen && (
           <nav className="mobile-dropdown-menu">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
-            <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('estoque'); window.scrollTo(0,0); }}>Estoque</a>
+            <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('estoque'); window.scrollTo(0,0); }}>Comprar</a>
+            <a href="#encomendar" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('encomendar'); window.scrollTo(0,0); }}>Encomendar</a>
             <a href="#vender" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
             <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('avaliacoes'); window.scrollTo(0,0); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
@@ -424,6 +537,27 @@ export default function App() {
         )}
 
         <main className="content-main">
+
+          {/* ================= TELA: ENCOMENDAR VEÍCULO ================= */}
+          {publicTab === 'encomendar' && (
+            <section className="filter-panel-refined" style={{textAlign: 'center'}}>
+              <h2 className="sec-title">Nós procuramos para você</h2>
+              <p style={{fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '25px'}}>Diga qual carro você sonha em ter e nosso time fará a busca na nossa rede de contatos para encontrar o veículo perfeito.</p>
+              <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero encomendar um veículo com as seguintes características:\n\nMarca: ${formEncomenda.marca}\nModelo: ${formEncomenda.modelo}\nAno mínimo: ${formEncomenda.anoMin}\nCor de preferência: ${formEncomenda.cor}\nOrçamento Máximo: R$ ${formEncomenda.valorMax}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form">
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                  <div><label>Marca Desejada</label><input placeholder="Ex: Honda" value={formEncomenda.marca} onChange={e => setFormEncomenda({...formEncomenda, marca: e.target.value})} required /></div>
+                  <div><label>Modelo</label><input placeholder="Ex: Civic EXL" value={formEncomenda.modelo} onChange={e => setFormEncomenda({...formEncomenda, modelo: e.target.value})} required /></div>
+                </div>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                  <div><label>Ano a partir de</label><input placeholder="Ex: 2020" value={formEncomenda.anoMin} onChange={e => setFormEncomenda({...formEncomenda, anoMin: e.target.value})} required /></div>
+                  <div><label>Cor de preferência</label><input placeholder="Ex: Preto ou Prata" value={formEncomenda.cor} onChange={e => setFormEncomenda({...formEncomenda, cor: e.target.value})} /></div>
+                </div>
+                <label>Orçamento Máximo (R$)</label>
+                <input placeholder="Ex: 130.000,00" value={formEncomenda.valorMax} onChange={e => handlePrecoChange(e.target.value, 'valorMax', formEncomenda, setFormEncomenda)} required />
+                <button type="submit" className="btn-interesse" style={{width:'100%', marginTop:'15px', padding:'15px', fontWeight:'700'}}>📲 ENVIAR ENCOMENDA POR WHATSAPP</button>
+              </form>
+            </section>
+          )}
 
           {/* ================= TELA: VENDER VEÍCULO ================= */}
           {publicTab === 'vender' && (
@@ -452,32 +586,29 @@ export default function App() {
               <h2 className="sec-title" style={{ marginTop: '20px' }}>{config?.titulo_clientes || "NOSSOS CLIENTES"}</h2>
               <div className="avaliacoes-grid">
                 {avaliacoesAprovadas.map(a => (
-                  <div key={a.id} className="avaliacao-card-full">
-                     <div className="avaliacao-perfil">
-                        {a.foto_url ? <img src={a.foto_url} className="avaliacao-img clickable-img" onClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} /> : <div className="no-photo-cliente-small">🚗</div>}
-                        <div className="avaliacao-info"><strong>{a.nome}</strong><span className="entrega-data">{formatarData(a.created_at)}</span></div>
-                     </div>
-                     <p className="avaliacao-texto">&quot;{a.texto}&quot;</p>
-                  </div>
+                  <ReviewCard key={a.id} a={a} onImgClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} />
                 ))}
               </div>
             </>
           )}
 
-          {/* ================= TELA: ESTOQUE (FILTROS DE VOLTA E COMPLETOS) ================= */}
+          {/* ================= TELA: ESTOQUE (FILTROS) ================= */}
           {publicTab === 'estoque' && (
             <section className="filter-panel-refined" style={{marginTop: '10px'}}>
               <div className="filter-grid-6">
-                <div className="filter-group"><label>Marca</label><select className="select-sleek" value={filtroMarca} onChange={e => setFiltroMarca(e.target.value)}><option value="">Todas</option>{TODAS_AS_MARCAS.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                <div className="filter-group"><label>Ano</label><select className="select-sleek" value={filtroAno} onChange={e => setFiltroAno(e.target.value)}><option value="">Todos</option>{ANOS_OPCOES.map(a => <option key={a} value={a}>{a}</option>)}</select></div>
-                <div className="filter-group"><label>Preço</label><select className="select-sleek" value={filtroPreco} onChange={e => setFiltroPreco(e.target.value)}><option value="">Todos</option><option value="ate-60k">Até R$ 60.000</option><option value="60k-100k">R$ 60k a 100k</option><option value="100k-150k">R$ 100k a 150k</option><option value="acima-150k">Acima R$ 150 mil</option></select></div>
-                <div className="filter-group"><label>KM</label><select className="select-sleek" value={filtroKm} onChange={e => setFiltroKm(e.target.value)}><option value="">Todos</option><option value="ate-30k">Até 30.000 km</option><option value="30k-60k">30.000 a 60.000 km</option><option value="acima-60k">Acima de 60.000 km</option></select></div>
-                <div className="filter-group"><label>Categoria</label><select className="select-sleek" value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)}><option value="">Todas</option>{TIPOS_CARRO.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-                <div className="filter-group"><label>Câmbio</label><select className="select-sleek" value={filtroCambio} onChange={e => setFiltroCambio(e.target.value)}><option value="">Todos</option><option value="Automático">Automático</option><option value="Manual">Manual</option></select></div>
+                <FilterDropdown label="Marca" options={TODAS_AS_MARCAS.map(m => ({label: m, value: m}))} selected={filtroMarca} setSelected={setFiltroMarca} />
+                <FilterDropdown label="Ano" options={ANOS_OPCOES.map(a => ({label: a, value: a}))} selected={filtroAno} setSelected={setFiltroAno} />
+                <FilterDropdown label="Preço" options={[{label: 'Até R$ 60 mil', value: 'ate-60k'}, {label: 'R$ 60k a 100k', value: '60k-100k'}, {label: 'R$ 100k a 150k', value: '100k-150k'}, {label: 'Acima R$ 150 mil', value: 'acima-150k'}]} selected={filtroPreco} setSelected={setFiltroPreco} />
+                <FilterDropdown label="KM" options={[{label: 'Até 30.000 km', value: 'ate-30k'}, {label: '30.000 a 60.000 km', value: '30k-60k'}, {label: 'Acima de 60.000 km', value: 'acima-60k'}]} selected={filtroKm} setSelected={setFiltroKm} />
+                <FilterDropdown label="Categoria" options={TIPOS_CARRO.map(t => ({label: t, value: t}))} selected={filtroTipo} setSelected={setFiltroTipo} />
+                <FilterDropdown label="Câmbio" options={[{label: 'Automático', value: 'Automático'}, {label: 'Manual', value: 'Manual'}]} selected={filtroCambio} setSelected={setFiltroCambio} />
               </div>
-              {(filtroMarca || filtroAno || filtroPreco || filtroKm || filtroCombustivel || filtroCambio || filtroTipo) && (
-                <button className="btn-clear-filters" onClick={() => { setFiltroMarca(''); setFiltroAno(''); setFiltroPreco(''); setFiltroKm(''); setFiltroCombustivel(''); setFiltroCambio(''); setFiltroTipo(''); }}>Limpar Filtros</button>
-              )}
+              <div style={{ display: 'flex', gap: '15px', marginTop: '20px', flexDirection: 'column' }}>
+                <button className="btn-filtrar-aplicar" onClick={aplicarFiltros}>Buscar Veículos</button>
+                {(filtrosAtivos.marca.length > 0 || filtrosAtivos.ano.length > 0 || filtrosAtivos.preco.length > 0 || filtrosAtivos.km.length > 0 || filtrosAtivos.combustivel.length > 0 || filtrosAtivos.cambio.length > 0 || filtrosAtivos.tipo.length > 0) && (
+                  <button className="btn-clear-filters" style={{marginTop: '0'}} onClick={limparFiltros}>Limpar Busca</button>
+                )}
+              </div>
             </section>
           )}
 
@@ -495,7 +626,8 @@ export default function App() {
                     <div className="banners-carousel" ref={bannersRef}>
                       {banners.map(b => (
                         <div key={b.id} className="banner-slide">
-                          <img src={b.url} alt="Banner" />
+                          {/* BLOQUEIO ABSOLUTO DE ARRASTE DA IMAGEM NO REACT */}
+                          <img src={b.url} alt="Banner" draggable={false} onDragStart={(e) => e.preventDefault()} />
                         </div>
                       ))}
                     </div>
@@ -512,7 +644,6 @@ export default function App() {
                   <div key={v.id} id={`carro-${v.id}`} className={`car-card ${publicTab === 'home' ? 'card-compact' : ''}`}>
                     <div className="car-media-slider">
                       {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
-                      {/* SELO DE VÍDEO SE HOUVER VÍDEO */}
                       {v.galeria?.some(m => m.tipo === 'video') && <div className="badge-video">▶ VÍDEO</div>}
                       
                       <div className="media-scroller">
@@ -527,14 +658,20 @@ export default function App() {
                     <div className="car-details">
                       <span className="car-marca-label">{v.marca}</span>
                       <h3 className="car-model-title">{v.modelo}</h3>
-                      <div className="car-meta"><span>{v.fabricacao}</span><span className="separator">|</span><span>{v.km} km</span><span className="separator">|</span><span>{v.combustivel}</span></div>
+                      <div className="car-meta">
+                        <span>{v.fabricacao}</span><span className="separator">|</span>
+                        <span>{v.km} km</span><span className="separator">|</span>
+                        <span>{v.combustivel}</span>
+                        {v.tracao && <><span className="separator">|</span><span>{v.tracao}</span></>}
+                      </div>
                       
-                      {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria) && (
+                      {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria || v.teto_solar) && (
                         <div className="car-tags-container-left">
                           {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
                           {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões na concessionária</span>}
                           {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar Aprovado</span>}
                           {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA pago</span>}
+                          {v.teto_solar && <span className="car-tag tag-verde">☀️ Teto Solar</span>}
                         </div>
                       )}
 
@@ -561,6 +698,17 @@ export default function App() {
                 <div style={{textAlign: 'center', margin: '50px 0'}}>
                   <button className="btn-estoque-completo" onClick={() => { setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
                     VEJA NOSSO ESTOQUE COMPLETO ➔
+                  </button>
+                </div>
+              )}
+              
+              {/* BOTÃO NÃO ACHOU O CARRO -> ENCOMENDE */}
+              {publicTab === 'estoque' && (
+                <div style={{textAlign: 'center', margin: '60px 0 20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)'}}>
+                  <h3 style={{color: 'var(--text-primary)', marginBottom: '10px', fontSize: '18px', fontWeight: 'bold'}}>Não encontrou o que procurava?</h3>
+                  <p style={{color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px'}}>Temos acesso a diversos veículos na região. Diga qual modelo deseja e nós encontramos para você.</p>
+                  <button className="btn-estoque-completo" style={{padding: '14px 25px', fontSize: '13px'}} onClick={() => { setPublicTab('encomendar'); window.scrollTo(0,0); }}>
+                    ENCOMENDAR MEU CARRO
                   </button>
                 </div>
               )}
@@ -594,16 +742,7 @@ export default function App() {
                 </div>
                 <div className="entregas-carousel" ref={carouselRef}>
                   {avaliacoesHome.map(a => (
-                    <div key={a.id} className="entrega-card-slide">
-                      {a.foto_url ? <img src={a.foto_url} className="entrega-img clickable-img" onClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} /> : <div className="no-photo-cliente">🚗</div>}
-                      <div className="entrega-overlay">
-                        <p className="entrega-depoimento">&quot;{a.texto}&quot;</p>
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '5px'}}>
-                          <span className="entrega-cliente">— {a.nome}</span>
-                          <span className="entrega-data">{formatarData(a.created_at)}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <ReviewCard key={a.id} a={a} isHome={true} onImgClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} />
                   ))}
                 </div>
                 <div className="avaliacoes-actions">
@@ -623,10 +762,10 @@ export default function App() {
                 )}
               </section>
 
-              {/* CARROSSEL DE FRASES MOTIVACIONAIS QUE ARRASTA PRO LADO */}
+              {/* CARROSSEL DE FRASES MOTIVACIONAIS */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
-                <div className="motivational-carousel">
+                <div className="motivational-carousel" ref={frasesRef}>
                   {frasesAtivasCarousel.map((frase, idx) => (
                     <div key={idx} className="motivational-slide">
                       <p className="motivational-text">{frase}</p>
@@ -647,7 +786,6 @@ export default function App() {
                           <span className="accordion-icon">{activeAccordion === item.id ? '−' : '+'}</span>
                         </div>
                         <div className="accordion-content">
-                          {/* SISTEMA QUE TRANSFORMA TEXTO EM TÓPICOS ALINHADOS À ESQUERDA SE TIVER QUEBRA DE LINHA */}
                           <ul style={{ padding: '25px 20px', listStyleType: 'none', margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
                             {item.texto.split('\n').map((linha: string, i: number) => linha.trim() ? (
                               <li key={i} style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', display: 'flex', gap: '8px', textAlign: 'left' }}>
@@ -769,19 +907,24 @@ export default function App() {
               <select value={form.combustivel} onChange={e => setForm({...form, combustivel: e.target.value})} className="select-sleek"><option value="Flex">Flex</option><option value="Gasolina">Gasolina</option><option value="Diesel">Diesel</option><option value="Elétrico">Elétrico</option></select>
               <select value={form.cambio} onChange={e => setForm({...form, cambio: e.target.value})} className="select-sleek"><option value="Automático">Auto</option><option value="Manual">Manual</option></select>
             </div>
-            <select value={form.tipo_carro} onChange={e => setForm({...form, tipo_carro: e.target.value})} className="select-sleek"><option value="Hatch">Hatch</option><option value="Sedan">Sedan</option><option value="SUV">SUV</option><option value="Picape">Picape</option></select>
             
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'15px'}}>
+            {/* NOVO CAMPO: TRAÇÃO E TIPO */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>
+              <select value={form.tipo_carro} onChange={e => setForm({...form, tipo_carro: e.target.value})} className="select-sleek"><option value="Hatch">Hatch</option><option value="Sedan">Sedan</option><option value="SUV">SUV</option><option value="Picape">Picape</option></select>
+              <select value={form.tracao || ''} onChange={e => setForm({...form, tracao: e.target.value})} className="select-sleek"><option value="">Tração (Opcional)</option><option value="4x2">4x2</option><option value="4x4">4x4</option><option value="AWD">AWD</option></select>
+            </div>
+            
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'15px', marginTop:'10px'}}>
               <input placeholder="Preço Ofertado" value={form.preco} onChange={e => handlePrecoChange(e.target.value, 'preco', form, setForm)} required />
               <input placeholder="Preço Antigo (Para gerar risco)" value={form.preco_antigo} onChange={e => handlePrecoChange(e.target.value, 'preco_antigo', form, setForm)} />
             </div>
 
             <div style={{background:'var(--bg-input)', padding:'15px', borderRadius:'8px', border:'1px solid var(--border-color)', margin:'15px 0'}}>
               <label style={{color:'var(--accent-gold)', marginBottom:'10px', display:'block', fontWeight:'bold'}}>Tags e Diferenciais</label>
-              {['unico_dono', 'revisoes_concessionaria', 'laudo_cautelar', 'ipva_pago', 'blindado'].map(tag => (
+              {['unico_dono', 'revisoes_concessionaria', 'laudo_cautelar', 'ipva_pago', 'blindado', 'teto_solar'].map(tag => (
                 <div key={tag} className="checkbox-row">
                   <input type="checkbox" checked={form[tag as keyof Veiculo] as boolean || false} onChange={e => setForm({...form, [tag]: e.target.checked})} />
-                  <label>{tag.replace('_', ' ').toUpperCase()}</label>
+                  <label>{tag.replace(/_/g, ' ').toUpperCase()}</label>
                 </div>
               ))}
             </div>
@@ -879,19 +1022,28 @@ export default function App() {
         {adminTab === 'avaliacoes' && (
           <div>
              <h3 style={{color:'var(--text-primary)'}}>Depoimentos de Clientes</h3>
-             <p style={{fontSize:'12px', color:'var(--text-secondary)', marginBottom:'15px'}}>Aprove depoimentos enviados pelo site ou crie novos manualmente.</p>
+             <p style={{fontSize:'12px', color:'var(--text-secondary)', marginBottom:'15px'}}>Aprove depoimentos ou edite as datas das entregas antigas.</p>
              
              {avaliacoes.map(a => (
-              <div key={a.id} style={{background:'var(--bg-input)', padding:'15px', borderRadius:'8px', marginBottom:'10px', display:'flex', gap:'15px', border: a.aprovado ? '1px solid var(--border-color)' : '1px solid var(--accent-gold)'}}>
+              <div key={a.id} style={{background:'var(--bg-input)', padding:'15px', borderRadius:'8px', marginBottom:'10px', display:'flex', gap:'15px', border: a.aprovado ? '1px solid var(--border-color)' : '1px solid var(--accent-gold)', flexWrap: 'wrap'}}>
                 {a.foto_url && <img src={a.foto_url} style={{width:'50px', height:'50px', borderRadius:'50%', objectFit:'cover'}} />}
-                <div style={{flex:1}}>
+                <div style={{flex:1, minWidth: '200px'}}>
                   <strong style={{color:'var(--text-primary)', display:'flex', alignItems:'center', gap:'5px'}}>{a.nome} {!a.aprovado && <span style={{fontSize:'9px', background:'var(--accent-gold)', color:'black', padding:'2px 6px', borderRadius:'10px'}}>NOVO</span>}</strong>
                   <p style={{fontSize:'12px', color:'var(--text-secondary)'}}>{a.texto}</p>
                 </div>
                 <div style={{display:'flex', flexDirection:'column', gap:'5px', justifyContent:'center'}}>
                    {!a.aprovado && <button onClick={() => aprovarAvaliacao(a.id)} style={{background:'#25D366', color:'white', padding:'6px 12px', borderRadius:'4px', border:'none', cursor:'pointer', fontSize:'11px', fontWeight:'bold'}}>APROVAR</button>}
+                   <button onClick={() => { setEditDateId(a.id); setTempDate(a.created_at ? a.created_at.substring(0, 16) : ''); }} style={{background:'transparent', color:'var(--text-primary)', padding:'6px 12px', borderRadius:'4px', border:'1px solid var(--border-color)', cursor:'pointer', fontSize:'11px'}}>EDITAR DATA</button>
                    <button onClick={() => deletarAvaliacao(a.id)} style={{background:'var(--danger)', color:'white', padding:'6px 12px', borderRadius:'4px', border:'none', cursor:'pointer', fontSize:'11px'}}>EXCLUIR</button>
                 </div>
+                
+                {editDateId === a.id && (
+                  <div style={{marginTop: '10px', display: 'flex', gap: '10px', width: '100%', alignItems: 'center'}}>
+                      <input type="datetime-local" value={tempDate} onChange={e => setTempDate(e.target.value)} style={{flex: 1, padding: '8px', fontSize: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px'}} />
+                      <button onClick={() => salvarDataAvaliacao(a.id)} style={{background: 'var(--accent-gold)', color: '#000', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', border: 'none'}}>Salvar Data</button>
+                      <button onClick={() => setEditDateId(null)} style={{background: 'transparent', color: 'var(--text-secondary)', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', border: 'none'}}>Cancelar</button>
+                  </div>
+                )}
               </div>
              ))}
              
@@ -899,7 +1051,9 @@ export default function App() {
              <form onSubmit={e => enviarAvaliacao(e, true)} style={{background:'var(--bg-card)', padding:'15px', borderRadius:'8px', border:'1px solid var(--border-color)'}}>
                 <input placeholder="Nome do Cliente" value={pubReview.nome} onChange={e => setPubReview({...pubReview, nome: e.target.value})} required />
                 <textarea placeholder="Texto do depoimento..." value={pubReview.texto} onChange={e => setPubReview({...pubReview, texto: e.target.value})} required rows={3} />
-                <label style={{color:'var(--accent-gold)', fontSize:'12px', display:'block', marginBottom:'5px'}}>Foto do Cliente (Opcional)</label>
+                <label style={{color:'var(--accent-gold)', fontSize:'12px', display:'block', marginBottom:'5px'}}>Data da Entrega (Opcional, deixe em branco para usar a de hoje)</label>
+                <input type="datetime-local" value={pubReviewData} onChange={e => setPubReviewData(e.target.value)} />
+                <label style={{color:'var(--accent-gold)', fontSize:'12px', display:'block', marginBottom:'5px', marginTop:'15px'}}>Foto do Cliente (Opcional)</label>
                 <input type="file" accept="image/*" onChange={e => setPubReviewFile(e.target.files?.[0] || null)} />
                 <button type="submit" className="btn-interesse" style={{width:'100%', marginTop:'10px', padding:'12px'}} disabled={loading}>Publicar Depoimento</button>
              </form>

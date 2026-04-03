@@ -67,9 +67,9 @@ img {
 
 .brand-text-container { display: flex; align-items: center; }
 
-/* NOME DA MARCA FORÇADO PARA BRANCO, INDEPENDENTE DO MODO, 100% GARANTIDO */
-.brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 13px; font-weight: 400; color: #ffffff !important; margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; white-space: nowrap; }
-.brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: #ffffff !important; margin-left: 4px; text-transform: uppercase; }
+/* NOME DA MARCA ADAPTÁVEL: BRANCO NO MODO ESCURO E PRETO NO MODO CLARO */
+.brand-name { font-family: 'Archivo Black', 'Arial Black', sans-serif; font-size: 13px; font-weight: 400; color: var(--text-primary) !important; margin: 0; text-transform: uppercase; line-height: 1; letter-spacing: -0.5px; white-space: nowrap; transition: color 0.3s; }
+.brand-sub { font-family: 'Archivo Black', 'Arial Black', sans-serif; color: var(--text-primary) !important; margin-left: 4px; text-transform: uppercase; transition: color 0.3s; }
 
 .header-actions { position: relative; z-index: 999999; display: flex; align-items: center; gap: 10px; }
 .theme-toggle-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; outline: none; transition: transform 0.3s; pointer-events: auto; display: flex; align-items: center; justify-content: center; }

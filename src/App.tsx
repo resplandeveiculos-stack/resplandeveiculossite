@@ -117,17 +117,18 @@ const FilterDropdown = ({ label, options, selected, setSelected }: { label: stri
 
 const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClick: () => void, isHome?: boolean }) => {
   const [expandido, setExpandido] = useState(false);
-  // Reduzido para 80 caracteres para se adequar a apenas 2 linhas
   const isLong = a.texto && a.texto.length > 80;
 
   if (isHome) {
     return (
       <div className="entrega-card-slide">
         {a.foto_url ? <img src={a.foto_url} className="entrega-img clickable-img" draggable={false} onDragStart={e => e.preventDefault()} onClick={onImgClick} /> : <div className="no-photo-cliente">{a.nome.charAt(0).toUpperCase()}</div>}
-        <div className="entrega-overlay" style={{ height: expandido ? '100%' : 'auto', background: expandido ? 'rgba(0,0,0,0.95)' : '' }}>
-          <p className={`entrega-depoimento ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
-          {isLong && <button className="btn-ver-mais" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ler mais'}</button>}
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px', width: '100%'}}>
+        <div className="entrega-overlay" style={{ height: expandido ? '100%' : '140px', background: expandido ? 'rgba(0,0,0,0.95)' : '' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+            <p className={`entrega-depoimento ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
+            {isLong && <button className="btn-ver-mais" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ler mais'}</button>}
+          </div>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%', flexShrink: 0, marginTop: '8px'}}>
             <span className="entrega-cliente">— {a.nome}</span>
             <span className="entrega-data">{formatarData(a.created_at)}</span>
           </div>
@@ -225,7 +226,6 @@ export default function App() {
     }
   }, [veiculos]);
 
-  // ROLAGEM AUTOMÁTICA COM PAUSA INTELIGENTE
   useEffect(() => {
     const scrollCarousel = (element: HTMLDivElement | null, step: number, checkExpandido = false) => {
       if (element && view === 'public' && publicTab === 'home') {

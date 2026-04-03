@@ -42,6 +42,49 @@ const formatarData = (dataStr?: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
+// NOVO: MOTOR PARA PERMITIR ARRASTAR COM O MOUSE NO WINDOWS
+const DraggableScroller = React.forwardRef<HTMLDivElement, any>(({ children, className, style }, ref) => {
+  const internalRef = useRef<HTMLDivElement>(null);
+  const resolvedRef = (ref as React.MutableRefObject<HTMLDivElement>) || internalRef;
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [dragged, setDragged] = useState(false);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!resolvedRef.current) return;
+    setIsDragging(true);
+    setDragged(false);
+    setStartX(e.pageX - resolvedRef.current.offsetLeft);
+    setScrollLeft(resolvedRef.current.scrollLeft);
+  };
+  const onMouseLeave = () => setIsDragging(false);
+  const onMouseUp = () => setIsDragging(false);
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !resolvedRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - resolvedRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5; // Velocidade do arraste
+    if (Math.abs(walk) > 5) setDragged(true);
+    resolvedRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (dragged) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
+
+  return (
+    <div ref={resolvedRef} className={`grab-scroll ${className || ''}`}
+      onMouseDown={onMouseDown} onMouseLeave={onMouseLeave} onMouseUp={onMouseUp} onMouseMove={onMouseMove} onClickCapture={onClickCapture} style={style}
+    >
+      {children}
+    </div>
+  );
+});
+
 const FilterDropdown = ({ label, options, selected, setSelected }: { label: string, options: {label: string, value: string}[], selected: string[], setSelected: any }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -80,11 +123,11 @@ const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClic
   if (isHome) {
     return (
       <div className="entrega-card-slide">
-        {a.foto_url ? <img src={a.foto_url} className="entrega-img clickable-img" onClick={onImgClick} /> : <div className="no-photo-cliente">{a.nome.charAt(0).toUpperCase()}</div>}
-        <div className="entrega-overlay" style={{ height: expandido ? '100%' : 'auto', background: expandido ? 'rgba(0,0,0,0.9)' : '' }}>
+        {a.foto_url ? <img src={a.foto_url} className="entrega-img clickable-img" draggable={false} onDragStart={e => e.preventDefault()} onClick={onImgClick} /> : <div className="no-photo-cliente">{a.nome.charAt(0).toUpperCase()}</div>}
+        <div className="entrega-overlay" style={{ height: expandido ? '100%' : 'auto', background: expandido ? 'rgba(0,0,0,0.95)' : '' }}>
           <p className={`entrega-depoimento ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
           {isLong && <button className="btn-ver-mais" onClick={() => setExpandido(!expandido)}>{expandido ? 'Ver menos' : 'Ler mais'}</button>}
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '5px', width: '100%'}}>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '10px', width: '100%'}}>
             <span className="entrega-cliente">— {a.nome}</span>
             <span className="entrega-data">{formatarData(a.created_at)}</span>
           </div>
@@ -96,7 +139,7 @@ const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClic
   return (
     <div className="avaliacao-card-full">
        <div className="avaliacao-perfil">
-          {a.foto_url ? <img src={a.foto_url} className="avaliacao-img clickable-img" onClick={onImgClick} /> : <div className="no-photo-cliente-small">{a.nome.charAt(0).toUpperCase()}</div>}
+          {a.foto_url ? <img src={a.foto_url} className="avaliacao-img clickable-img" draggable={false} onDragStart={e => e.preventDefault()} onClick={onImgClick} /> : <div className="no-photo-cliente-small">{a.nome.charAt(0).toUpperCase()}</div>}
           <div className="avaliacao-info"><strong>{a.nome}</strong><span className="entrega-data">{formatarData(a.created_at)}</span></div>
        </div>
        <p className={`avaliacao-texto ${expandido ? 'expandido' : ''}`}>"{a.texto}"</p>
@@ -494,7 +537,6 @@ export default function App() {
           <nav className="desktop-top-nav">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setPublicTab('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Início</a>
             <a href="#estoque" onClick={(e) => { e.preventDefault(); setPublicTab('estoque'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Comprar</a>
-            <a href="#encomendar" onClick={(e) => { e.preventDefault(); setPublicTab('encomendar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Encomendar</a>
             <a href="#vender" onClick={(e) => { e.preventDefault(); setPublicTab('vender'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Vender</a>
             <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setPublicTab('avaliacoes'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
@@ -518,7 +560,6 @@ export default function App() {
           <nav className="mobile-dropdown-menu">
             <a href="#inicio" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); window.scrollTo(0,0); }}>Início</a>
             <a href="#estoque" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('estoque'); window.scrollTo(0,0); }}>Comprar</a>
-            <a href="#encomendar" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('encomendar'); window.scrollTo(0,0); }}>Encomendar</a>
             <a href="#vender" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('vender'); window.scrollTo(0,0); }}>Vender Veículo</a>
             <a href="#avaliacoes" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('avaliacoes'); window.scrollTo(0,0); }}>Avaliações</a>
             <a href="#resplife" onClick={(e) => { e.preventDefault(); setIsMobileMenuOpen(false); setPublicTab('home'); setTimeout(() => document.getElementById('resplife')?.scrollIntoView(), 100); }}>#RespLife</a>
@@ -528,10 +569,10 @@ export default function App() {
         <main className="content-main">
 
           {publicTab === 'encomendar' && (
-            <section className="filter-panel-refined" style={{textAlign: 'center'}}>
-              <h2 className="sec-title">Nós procuramos para você</h2>
-              <p style={{fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '25px'}}>Diga qual carro você sonha em ter e nosso time fará a busca na nossa rede de contatos para encontrar o veículo perfeito.</p>
-              <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero encomendar um veículo com as seguintes características:\n\nMarca: ${formEncomenda.marca}\nModelo: ${formEncomenda.modelo}\nAno mínimo: ${formEncomenda.anoMin}\nCor de preferência: ${formEncomenda.cor}\nOrçamento Máximo: R$ ${formEncomenda.valorMax}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form">
+            <section className="filter-panel-refined" style={{textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+              <h2 className="sec-title" style={{width: '100%', textAlign: 'center'}}>Encontre meu carro</h2>
+              <p style={{fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '25px', width: '100%', textAlign: 'center'}}>Diga qual carro você sonha em ter e nosso time fará a busca na nossa rede de contatos para encontrar o veículo perfeito.</p>
+              <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero encomendar um veículo com as seguintes características:\n\nMarca: ${formEncomenda.marca}\nModelo: ${formEncomenda.modelo}\nAno mínimo: ${formEncomenda.anoMin}\nCor de preferência: ${formEncomenda.cor}\nOrçamento Máximo: R$ ${formEncomenda.valorMax}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form" style={{width: '100%', maxWidth: '600px'}}>
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                   <div><label>Marca Desejada</label><input placeholder="Ex: Honda" value={formEncomenda.marca} onChange={e => setFormEncomenda({...formEncomenda, marca: e.target.value})} required /></div>
                   <div><label>Modelo</label><input placeholder="Ex: Civic EXL" value={formEncomenda.modelo} onChange={e => setFormEncomenda({...formEncomenda, modelo: e.target.value})} required /></div>
@@ -542,15 +583,15 @@ export default function App() {
                 </div>
                 <label>Orçamento Máximo (R$)</label>
                 <input placeholder="Ex: 130.000,00" value={formEncomenda.valorMax} onChange={e => handlePrecoChange(e.target.value, 'valorMax', formEncomenda, setFormEncomenda)} required />
-                <button type="submit" className="btn-interesse" style={{width:'100%', marginTop:'15px', padding:'15px', fontWeight:'700'}}>📲 ENVIAR ENCOMENDA POR WHATSAPP</button>
+                <button type="submit" className="btn-interesse" style={{width:'100%', marginTop:'15px', padding:'15px', fontWeight:'700'}}>📲 ENVIAR PEDIDO POR WHATSAPP</button>
               </form>
             </section>
           )}
 
           {publicTab === 'vender' && (
-            <section className="filter-panel-refined" style={{textAlign: 'center'}}>
-              <h2 className="sec-title">Venda seu Veículo</h2>
-              <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero vender meu veículo.\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nCor: ${formVender.cor}\nCombustível: ${formVender.combustivel}\nKM: ${formVender.km}\nValor Pretendido: R$ ${formVender.valor}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form">
+            <section className="filter-panel-refined" style={{textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
+              <h2 className="sec-title" style={{width: '100%', textAlign: 'center'}}>Venda seu Veículo</h2>
+              <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero vender meu veículo.\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nCor: ${formVender.cor}\nCombustível: ${formVender.combustivel}\nKM: ${formVender.km}\nValor Pretendido: R$ ${formVender.valor}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form" style={{width: '100%', maxWidth: '600px'}}>
                 <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                   <div><label>Ano</label><input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required /></div>
                   <div><label>Cor</label><input placeholder="Ex: Branco" value={formVender.cor} onChange={e => setFormVender({...formVender, cor: e.target.value})} required /></div>
@@ -607,13 +648,13 @@ export default function App() {
                   </section>
 
                   {Array.isArray(banners) && banners.length > 0 && (
-                    <div className="banners-carousel" ref={bannersRef}>
+                    <DraggableScroller className="banners-carousel" ref={bannersRef}>
                       {banners.map(b => (
                         <div key={b.id} className="banner-slide">
                           <img src={b.url} alt="Banner" draggable={false} onDragStart={(e) => e.preventDefault()} />
                         </div>
                       ))}
-                    </div>
+                    </DraggableScroller>
                   )}
                 </>
               )}
@@ -629,13 +670,13 @@ export default function App() {
                       {v.blindado && <div className="badge-blindado">🛡️ BLINDADO</div>}
                       {v.galeria?.some(m => m.tipo === 'video') && <div className="badge-video">▶ VÍDEO</div>}
                       
-                      <div className="media-scroller">
+                      <DraggableScroller className="media-scroller">
                         {v.galeria?.map((m, i) => (
                            <div key={i} className="media-slide">
-                             {m.tipo === 'video' ? <video src={`${m.url}#t=0.001`} controls className="media-real-img" /> : <img src={m.url} className="media-real-img clickable-img" onClick={() => setExpandedGallery({ imagens: v.galeria, index: i })} />}
+                             {m.tipo === 'video' ? <video src={`${m.url}#t=0.001`} controls className="media-real-img" /> : <img src={m.url} className="media-real-img clickable-img" draggable={false} onDragStart={(e) => e.preventDefault()} onClick={() => setExpandedGallery({ imagens: v.galeria, index: i })} />}
                            </div>
                         ))}
-                      </div>
+                      </DraggableScroller>
                       {v.galeria?.length > 1 && <div className="swipe-hint">deslize ➔</div>}
                     </div>
                     <div className="car-details">
@@ -685,12 +726,13 @@ export default function App() {
                 </div>
               )}
               
+              {/* BOTÃO ENCONTRE MEU CARRO */}
               {publicTab === 'estoque' && (
-                <div style={{textAlign: 'center', margin: '60px 0 20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)'}}>
-                  <h3 style={{color: 'var(--text-primary)', marginBottom: '10px', fontSize: '18px', fontWeight: 'bold'}}>Não encontrou o que procurava?</h3>
-                  <p style={{color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px'}}>Temos acesso a diversos veículos na região. Diga qual modelo deseja e nós encontramos para você.</p>
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', margin: '60px 0 20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)'}}>
+                  <h3 style={{color: 'var(--text-primary)', marginBottom: '10px', fontSize: '18px', fontWeight: 'bold', width: '100%', textAlign: 'center'}}>Não encontrou o que procurava?</h3>
+                  <p style={{color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '13px', maxWidth: '600px'}}>Temos acesso a diversos veículos na região. Diga qual modelo deseja e nós encontramos para você.</p>
                   <button className="btn-estoque-completo" style={{padding: '14px 25px', fontSize: '13px'}} onClick={() => { setPublicTab('encomendar'); window.scrollTo(0,0); }}>
-                    ENCOMENDAR MEU CARRO
+                    ENCONTRE MEU CARRO
                   </button>
                 </div>
               )}
@@ -702,14 +744,14 @@ export default function App() {
               {videosGaleria.length > 0 && (
                 <section id="resplife" className="sec-videos">
                   <h2 className="sec-title">{config?.titulo_videos || "RESPLANDE LIFE"}</h2>
-                  <div className="videos-carousel">
+                  <DraggableScroller className="videos-carousel">
                     {videosGaleria.map(vid => (
                       <div key={vid.id} className="video-card-slide">
                         <video src={`${vid.url}#t=0.001`} controls className="video-player-public" />
                         <div className="video-info"><h4>{vid.titulo}</h4><p>{vid.descricao}</p></div>
                       </div>
                     ))}
-                  </div>
+                  </DraggableScroller>
                 </section>
               )}
 
@@ -721,11 +763,11 @@ export default function App() {
                     <span className="stat-label">veículos vendidos com procedência</span>
                   </div>
                 </div>
-                <div className="entregas-carousel" ref={carouselRef}>
+                <DraggableScroller className="entregas-carousel" ref={carouselRef}>
                   {avaliacoesHome.map(a => (
                     <ReviewCard key={a.id} a={a} isHome={true} onImgClick={() => setExpandedGallery({ imagens: [{ tipo: 'foto', url: a.foto_url }], index: 0 })} />
                   ))}
-                </div>
+                </DraggableScroller>
                 <div className="avaliacoes-actions">
                   <button className="btn-avaliar-primary" onClick={() => setShowReviewForm(!showReviewForm)}>
                     {showReviewForm ? 'Cancelar Avaliação' : 'Deixar minha avaliação'}
@@ -743,15 +785,16 @@ export default function App() {
                 )}
               </section>
 
+              {/* CARROSSEL DE FRASES MOTIVACIONAIS */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
-                <div className="motivational-carousel" ref={frasesRef}>
+                <DraggableScroller className="motivational-carousel" ref={frasesRef}>
                   {frasesAtivasCarousel.map((frase, idx) => (
                     <div key={idx} className="motivational-slide">
                       <p className="motivational-text">{frase}</p>
                     </div>
                   ))}
-                </div>
+                </DraggableScroller>
                 <div className="swipe-hint-text">Arraste para o lado ➔</div>
               </section>
 

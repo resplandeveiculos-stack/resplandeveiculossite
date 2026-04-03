@@ -117,7 +117,8 @@ const FilterDropdown = ({ label, options, selected, setSelected }: { label: stri
 
 const ReviewCard = ({ a, onImgClick, isHome = false }: { a: Avaliacao, onImgClick: () => void, isHome?: boolean }) => {
   const [expandido, setExpandido] = useState(false);
-  const isLong = a.texto && a.texto.length > 100;
+  // Reduzido para 80 caracteres para se adequar a apenas 2 linhas
+  const isLong = a.texto && a.texto.length > 80;
 
   if (isHome) {
     return (
@@ -224,6 +225,7 @@ export default function App() {
     }
   }, [veiculos]);
 
+  // ROLAGEM AUTOMÁTICA COM PAUSA INTELIGENTE
   useEffect(() => {
     const scrollCarousel = (element: HTMLDivElement | null, step: number, checkExpandido = false) => {
       if (element && view === 'public' && publicTab === 'home') {

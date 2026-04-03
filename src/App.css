@@ -49,6 +49,16 @@ body {
 
 p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 
+/* BLOQUEIA O ARRASTE FANTASMA DE IMAGENS NO COMPUTADOR DE FORMA GLOBAL */
+img {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  user-select: none;
+}
+
 /* ================= HEADER E NAVEGAÇÃO ================= */
 .header-main { position: fixed; width: 100%; top: 0; left: 0; z-index: 999999; background: var(--header-bg); backdrop-filter: blur(10px); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 10px; }
 
@@ -84,7 +94,15 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 .hero-section h2 { font-size: 28px; line-height: 1.2; margin-bottom: 10px; color: var(--text-primary); font-weight: 700; text-transform: uppercase;}
 .hero-subtitle { font-size: 13px; color: var(--accent-gold); font-weight: 600; text-align: center; }
 
-/* BANNER RESPONSIVO. OVERSCROLL-BEHAVIOR BLOQUEIA O EFEITO ELÁSTICO */
+/* O MOTOR DO ARRASTE DO MOUSE */
+.grab-scroll {
+  cursor: grab;
+}
+.grab-scroll:active {
+  cursor: grabbing;
+}
+
+/* BANNER RESPONSIVO. OVERSCROLL-BEHAVIOR BLOQUEIA O EFEITO ELÁSTICO E QUICADA */
 .banners-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-top: 40px; margin-bottom: 50px; border-radius: 12px; background: var(--bg-deep); height: auto; overscroll-behavior-x: none;}
 .banners-carousel::-webkit-scrollbar { display: none; }
 .banner-slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; width: 100%; display: block; }
@@ -128,7 +146,7 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 .media-slide { flex: 0 0 100%; scroll-snap-align: start; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg-deep); }
 
 /* FOTOS NUNCA AMASSAM E TEM MAIS ESPAÇO AGORA */
-.media-real-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+.media-real-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; pointer-events: auto; }
 .clickable-img { cursor: zoom-in; } 
 
 .swipe-hint { position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 20px; font-size: 10px; pointer-events: none; backdrop-filter: blur(4px); }
@@ -202,9 +220,9 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 .entregas-carousel { display: flex; flex-direction: row; gap: 20px; margin-bottom: 30px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 10px; padding-left: 2px; overscroll-behavior-x: none;}
 .entregas-carousel::-webkit-scrollbar { display: none; }
 
-/* AUMENTADO PARA O DEGRADÊ NÃO CORTAR O ROSTO DAS PESSOAS */
+/* AUMENTADO PARA O DEGRADÊ NÃO CORTAR O ROSTO DAS PESSOAS NO CELULAR */
 .entrega-card-slide { flex: 0 0 calc(85% - 10px); scroll-snap-align: start; position: relative; height: 320px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: var(--bg-card); display: block; box-shadow: 0 10px 30px var(--shadow-glow);}
-.entrega-img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; -webkit-user-drag: none; } 
+.entrega-img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: auto; user-select: none; -webkit-user-drag: none; } 
 
 /* DEGRADÊ MAIS LIMPO E SEM BLUR PARA NÃO EMBAÇAR A FOTO */
 .entrega-overlay { position: absolute; bottom: 0; left: 0; width: 100%; padding: 50px 15px 15px; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,1) 100%); display: flex; flex-direction: column; gap: 4px; pointer-events: none; transition: 0.3s;}
@@ -235,7 +253,7 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 .avaliacoes-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 40px; }
 .avaliacao-card-full { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: 0 10px 30px var(--shadow-glow); }
 .avaliacao-perfil { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-.avaliacao-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-gold); user-select: none; -webkit-user-drag: none;}
+.avaliacao-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-gold); pointer-events: auto; user-select: none; -webkit-user-drag: none;}
 
 .no-photo-cliente-small { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-input); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: var(--text-secondary); border: 1px solid var(--border-color); font-family: 'Archivo Black', sans-serif; }
 
@@ -248,9 +266,14 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 .progress-bar-container { background: var(--border-color); border-radius: 10px; height: 8px; margin-top: 10px; overflow: hidden; width: 100%; border: 1px solid var(--border-color); }
 .progress-bar-fill { background: var(--accent-gold); height: 100%; transition: width 0.3s ease; border-radius: 10px; }
 
-.public-review-form { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); margin-top: 20px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px var(--shadow-glow);}
+/* ================= FORMULÁRIOS ================= */
+.public-review-form { background: var(--bg-card); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); margin-top: 20px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px var(--shadow-glow); text-align: left; }
+.public-review-form label { display: block; font-size: 12px; color: var(--accent-gold); margin-bottom: 5px; font-weight: 600; text-align: left; text-transform: uppercase; letter-spacing: 0.5px; }
 .public-review-form input, .public-review-form textarea { width: 100%; background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-primary); padding: 14px; border-radius: 8px; outline: none; font-family: inherit; font-size: 14px; }
 .public-review-form input:focus, .public-review-form textarea:focus { border-color: var(--accent-gold); }
+
+/* GRID PARA FORMULÁRIOS ALINHADOS */
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 5px; }
 
 /* ================= FRASES MOTIVACIONAIS ================= */
 .motivational-panel { padding: 40px 20px; text-align: center; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin: 60px 0 40px; background: radial-gradient(circle at center, var(--bg-card) 0%, var(--bg-pure) 100%); }
@@ -258,7 +281,7 @@ p, .about-history, .accordion-content p, .video-info p { text-align: left; }
 
 .motivational-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; scrollbar-width: none; padding-bottom: 10px; overscroll-behavior-x: none;}
 .motivational-carousel::-webkit-scrollbar { display: none; }
-.motivational-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; }
+.motivational-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; pointer-events: none;}
 .motivational-text { font-size: 18px; color: var(--accent-gold); font-style: italic; font-weight: 600; line-height: 1.4; text-align: center; }
 .swipe-hint-text { font-size: 10px; color: var(--text-secondary); margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
@@ -303,6 +326,11 @@ input:focus, textarea:focus, .select-sleek:focus { border-color: var(--accent-go
 .btn-submit-car { background: var(--accent-gold); color: var(--bg-pure); border: none; padding: 16px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; width: 100%; margin-top: 10px; transition: 0.2s; font-family: inherit; text-transform: uppercase; letter-spacing: 1px; }
 .btn-submit-car:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ================= COMPORTAMENTO PARA CELULARES ================= */
+@media (max-width: 768px) {
+  .form-row-2 { grid-template-columns: 1fr; gap: 10px; margin-bottom: 10px; }
+}
+
 /* ================= COMPORTAMENTO PARA COMPUTADOR (DESKTOP) ================= */
 @media (min-width: 768px) {
   .brand-name { font-size: 18px; }
@@ -313,7 +341,7 @@ input:focus, textarea:focus, .select-sleek:focus { border-color: var(--accent-go
   
   .menu-toggle-btn { display: none !important; }
   
-  /* BANNER NO COMPUTADOR */
+  /* BANNER NO COMPUTADOR COM TAMANHO FIXO (WIDESCREEN) */
   .banners-carousel { height: 400px; }
   
   /* A IMAGEM NÃO PODE SER INTERAGIDA NO PC PARA EVITAR ARRASTE FANTASMA */

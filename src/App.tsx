@@ -42,7 +42,6 @@ const formatarData = (dataStr?: string) => {
   return date.toLocaleDateString('pt-BR');
 };
 
-// NOVO: MOTOR PARA PERMITIR ARRASTAR COM O MOUSE NO WINDOWS
 const DraggableScroller = React.forwardRef<HTMLDivElement, any>(({ children, className, style }, ref) => {
   const internalRef = useRef<HTMLDivElement>(null);
   const resolvedRef = (ref as React.MutableRefObject<HTMLDivElement>) || internalRef;
@@ -64,7 +63,7 @@ const DraggableScroller = React.forwardRef<HTMLDivElement, any>(({ children, cla
     if (!isDragging || !resolvedRef.current) return;
     e.preventDefault();
     const x = e.pageX - resolvedRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; // Velocidade do arraste
+    const walk = (x - startX) * 1.5;
     if (Math.abs(walk) > 5) setDragged(true);
     resolvedRef.current.scrollLeft = scrollLeft - walk;
   };
@@ -573,11 +572,11 @@ export default function App() {
               <h2 className="sec-title" style={{width: '100%', textAlign: 'center'}}>Encontre meu carro</h2>
               <p style={{fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '25px', width: '100%', textAlign: 'center'}}>Diga qual carro você sonha em ter e nosso time fará a busca na nossa rede de contatos para encontrar o veículo perfeito.</p>
               <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero encomendar um veículo com as seguintes características:\n\nMarca: ${formEncomenda.marca}\nModelo: ${formEncomenda.modelo}\nAno mínimo: ${formEncomenda.anoMin}\nCor de preferência: ${formEncomenda.cor}\nOrçamento Máximo: R$ ${formEncomenda.valorMax}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form" style={{width: '100%', maxWidth: '600px'}}>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                <div className="form-row-2">
                   <div><label>Marca Desejada</label><input placeholder="Ex: Honda" value={formEncomenda.marca} onChange={e => setFormEncomenda({...formEncomenda, marca: e.target.value})} required /></div>
                   <div><label>Modelo</label><input placeholder="Ex: Civic EXL" value={formEncomenda.modelo} onChange={e => setFormEncomenda({...formEncomenda, modelo: e.target.value})} required /></div>
                 </div>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                <div className="form-row-2">
                   <div><label>Ano a partir de</label><input placeholder="Ex: 2020" value={formEncomenda.anoMin} onChange={e => setFormEncomenda({...formEncomenda, anoMin: e.target.value})} required /></div>
                   <div><label>Cor de preferência</label><input placeholder="Ex: Preto ou Prata" value={formEncomenda.cor} onChange={e => setFormEncomenda({...formEncomenda, cor: e.target.value})} /></div>
                 </div>
@@ -592,13 +591,13 @@ export default function App() {
             <section className="filter-panel-refined" style={{textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
               <h2 className="sec-title" style={{width: '100%', textAlign: 'center'}}>Venda seu Veículo</h2>
               <form onSubmit={(e) => { e.preventDefault(); const msg = encodeURIComponent(`Olá! Quero vender meu veículo.\nAno: ${formVender.ano}\nModelo: ${formVender.modelo}\nVersão: ${formVender.versao}\nCor: ${formVender.cor}\nCombustível: ${formVender.combustivel}\nKM: ${formVender.km}\nValor Pretendido: R$ ${formVender.valor}`); window.open(getWhatsAppLink(msg), '_blank'); }} className="public-review-form" style={{width: '100%', maxWidth: '600px'}}>
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                <div className="form-row-2">
                   <div><label>Ano</label><input placeholder="Ex: 2022" value={formVender.ano} onChange={e => setFormVender({...formVender, ano: e.target.value})} required /></div>
                   <div><label>Cor</label><input placeholder="Ex: Branco" value={formVender.cor} onChange={e => setFormVender({...formVender, cor: e.target.value})} required /></div>
                 </div>
                 <label>Modelo</label><input placeholder="Ex: Corolla" value={formVender.modelo} onChange={e => setFormVender({...formVender, modelo: e.target.value})} required />
                 <label>Versão</label><input placeholder="Ex: XEI 2.0" value={formVender.versao} onChange={e => setFormVender({...formVender, versao: e.target.value})} required />
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
+                <div className="form-row-2">
                   <div><label>KM</label><input placeholder="Ex: 45000" value={formVender.km} onChange={e => setFormVender({...formVender, km: e.target.value})} required /></div>
                   <div><label>Combustível</label><select value={formVender.combustivel} onChange={e => setFormVender({...formVender, combustivel: e.target.value})} className="select-sleek"><option value="Gasolina">Gasolina</option><option value="Diesel">Diesel</option><option value="Flex">Flex</option><option value="Elétrico">Elétrico</option><option value="Híbrido">Híbrido</option></select></div>
                 </div>
@@ -726,7 +725,6 @@ export default function App() {
                 </div>
               )}
               
-              {/* BOTÃO ENCONTRE MEU CARRO */}
               {publicTab === 'estoque' && (
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', margin: '60px 0 20px', padding: '30px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border-color)'}}>
                   <h3 style={{color: 'var(--text-primary)', marginBottom: '10px', fontSize: '18px', fontWeight: 'bold', width: '100%', textAlign: 'center'}}>Não encontrou o que procurava?</h3>
@@ -785,7 +783,6 @@ export default function App() {
                 )}
               </section>
 
-              {/* CARROSSEL DE FRASES MOTIVACIONAIS */}
               <section className="motivational-panel">
                 <h3 className="motivational-quotes">&quot;</h3>
                 <DraggableScroller className="motivational-carousel" ref={frasesRef}>
@@ -850,7 +847,6 @@ export default function App() {
     );
   }
 
-  // ================= VIEW ADMIN =================
   return (
     <div className="app-admin">
       <header className="header-main">

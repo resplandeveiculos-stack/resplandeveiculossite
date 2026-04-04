@@ -14,7 +14,7 @@ interface Avaliacao { id: number; nome: string; texto: string; foto_url: string;
 interface VideoGaleria { id: number; url: string; titulo: string; descricao: string; }
 interface Banner { id: number; url: string; }
 
-const TODAS_AS_MARCAS = ['Audi', 'BMW', 'BYD', 'Caoa Chery', 'Chevrolet', 'Citroën', 'Fiat', 'Ford', 'GWM', 'Honda', 'Hyundai', 'Jeep', 'Kia', 'Land Rover', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Peugeot', 'Porsche', 'Renault', 'Suzuki', 'Toyota', 'Volkswagen', 'Volvo'].sort();
+const TODAS_AS_MARCAS = ['Audi', 'BMW', 'BYD', 'Caoa Chery', 'Chevrolet', 'Citroën', 'Fiat', 'Ford', 'GWM', 'Honda', 'Hyundai', 'Jeep', 'Kia', 'Land Rover', 'Mercedes-Benz','IVECO', 'Mitsubishi', 'Nissan', 'Peugeot', 'Porsche', 'Renault', 'Suzuki', 'Toyota', 'Volkswagen', 'Volvo'].sort();
 const ANOS_OPCOES = Array.from({length: 27}, (_, i) => String(2026 - i));
 const TIPOS_CARRO = ['Hatch', 'Sedan', 'SUV', 'Picape', 'Crossover', 'Minivan', 'Esportivo', 'Van', 'Perua'].sort();
 

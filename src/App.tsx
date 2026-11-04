@@ -15,8 +15,8 @@ interface VideoGaleria { id: number; url: string; titulo: string; descricao: str
 interface Banner { id: number; url: string; }
 
 const TODAS_AS_MARCAS = ['Audi', 'BMW', 'BYD', 'Caoa Chery', 'Chevrolet', 'Citroën', 'Fiat', 'Ford', 'GWM', 'Honda', 'Hyundai', 'Jeep', 'Kia', 'Land Rover', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Peugeot', 'Porsche', 'Renault', 'Suzuki', 'Toyota', 'Volkswagen', 'Volvo'].sort();
-const ANOS_OPCOES = Array.from({length: 27}, (_, i) => String(2026 - i));
-const TIPOS_CARRO = ['Hatch', 'Sedan', 'SUV', 'Picape', 'Crossover', 'Minivan', 'Esportivo', 'Van', 'Perua'].sort();
+const ANOS_OPCOES = Array.from({length: 29}, (_, i) => String(2028 - i));
+const TIPOS_CARRO = ['Hatch', 'Sedan', 'SUV', 'Picape', 'Crossover', 'Minivan', 'Esportivo', 'Van', 'Perua', 'Utilitário'].sort();
 
 const FRASES_MOTIVACIONAIS_FALLBACK = [
   "Acelere em direção aos seus sonhos. Seu novo carro está aqui.",
@@ -705,7 +705,8 @@ export default function App() {
                       <div className="car-meta">
                         <span>{v.fabricacao}</span><span className="separator">|</span>
                         <span>{v.km} km</span><span className="separator">|</span>
-                        <span>{v.combustivel}</span>
+                        <span>{v.combustivel}</span><span className="separator">|</span>
+                        <span>{v.cambio}</span>
                         {v.tracao && <><span className="separator">|</span><span>{v.tracao}</span></>}
                       </div>
                       

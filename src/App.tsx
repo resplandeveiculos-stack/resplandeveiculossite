@@ -709,13 +709,15 @@ export default function App() {
                         {v.tracao && <><span className="separator">|</span><span>{v.tracao}</span></>}
                       </div>
                       
-                      {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria || v.teto_solar) && (
+                      {(v.unico_dono || v.laudo_cautelar || v.ipva_pago || v.revisoes_concessionaria || v.teto_solar || v.cambio) && (
                         <div className="car-tags-container-left">
-                          {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
-                          {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões na concessionária</span>}
-                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar Aprovado</span>}
-                          {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA pago</span>}
+                          {v.cambio === 'Automático' && <span className="car-tag tag-verde">🕹️ Automático</span>}
+                          {v.cambio === 'Manual' && <span className="car-tag tag-verde">🕹️ Manual</span>}
                           {v.teto_solar && <span className="car-tag tag-verde">☀️ Teto Solar</span>}
+                          {v.unico_dono && <span className="car-tag tag-verde">⭐ Único Dono</span>}
+                          {v.revisoes_concessionaria && <span className="car-tag tag-verde">🔧 Revisões Concessionária</span>}
+                          {v.laudo_cautelar && <span className="car-tag tag-verde">✅ Laudo Cautelar</span>}
+                          {v.ipva_pago && <span className="car-tag tag-verde">💳 IPVA Pago</span>}
                         </div>
                       )}
 
@@ -958,14 +960,38 @@ export default function App() {
               <input placeholder="Preço Antigo (Para gerar risco)" value={form.preco_antigo} onChange={e => handlePrecoChange(e.target.value, 'preco_antigo', form, setForm)} />
             </div>
 
-            <div style={{background:'var(--bg-input)', padding:'15px', borderRadius:'8px', border:'1px solid var(--border-color)', margin:'15px 0'}}>
-              <label style={{color:'var(--accent-gold)', marginBottom:'10px', display:'block', fontWeight:'bold'}}>Tags e Diferenciais</label>
-              {['unico_dono', 'revisoes_concessionaria', 'laudo_cautelar', 'ipva_pago', 'blindado', 'teto_solar'].map(tag => (
-                <div key={tag} className="checkbox-row">
-                  <input type="checkbox" checked={form[tag as keyof Veiculo] as boolean || false} onChange={e => setForm({...form, [tag]: e.target.checked})} />
-                  <label>{tag.replace(/_/g, ' ').toUpperCase()}</label>
-                </div>
-              ))}
+            <div style={{background: 'var(--bg-input)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border-color)', margin: '15px 0'}}>
+              <label style={{color: 'var(--accent-gold)', marginBottom: '10px', display: 'block', fontWeight: 'bold'}}>Tags e Diferenciais</label>
+            
+              <div className="checkbox-row">
+                <input type="checkbox" checked={form.unico_dono || false} onChange={e => setForm({...form, unico_dono: e.target.checked})} />
+                <label>Único Dono</label>
+              </div>
+            
+              <div className="checkbox-row">
+                <input type="checkbox" checked={form.revisoes_concessionaria || false} onChange={e => setForm({...form, revisoes_concessionaria: e.target.checked})} />
+                <label>Revisões em Concessionária</label>
+              </div>
+            
+              <div className="checkbox-row">
+                <input type="checkbox" checked={form.laudo_cautelar || false} onChange={e => setForm({...form, laudo_cautelar: e.target.checked})} />
+                <label>Laudo Cautelar Aprovado</label>
+              </div>
+            
+              <div className="checkbox-row">
+                <input type="checkbox" checked={form.ipva_pago || false} onChange={e => setForm({...form, ipva_pago: e.target.checked})} />
+                <label>IPVA Pago</label>
+              </div>
+
+              <div className="checkbox-row">
+                <input type="checkbox" checked={form.teto_solar || false} onChange={e => setForm({...form, teto_solar: e.target.checked})} />
+                <label>Teto Solar</label>
+              </div>
+            
+              <div className="checkbox-row" style={{marginBottom: 0, marginTop: '10px', borderTop: '1px solid var(--border-color)', paddingTop: '10px'}}>
+                <input type="checkbox" checked={form.blindado || false} onChange={e => setForm({...form, blindado: e.target.checked})} />
+                <label>Blindado (Aparece na Foto)</label>
+              </div>
             </div>
 
             {form.galeria && form.galeria.length > 0 && (
